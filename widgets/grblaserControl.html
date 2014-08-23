@@ -1,0 +1,761 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Widget / GRBL - jsFiddle demo</title>
+
+<script type='text/javascript' src='/js/lib/dummy.js'></script>
+<link rel="stylesheet" type="text/css" href="/css/result-light.css">
+<link rel="stylesheet" type="text/css" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+<script type='text/javascript' src="http://www.chilipeppr.com/js/require.js"></script>
+
+
+<style type='text/css'>
+    #com-chilipeppr-widget-grblaser-body {
+        /* padding:0; */
+    }
+    .com-chilipeppr-interface-cnccontroller-stat .col {
+        padding:0 10px 0 0;
+    }
+    .com-chilipeppr-interface-cnccontroller-stat .col:last-child {
+        padding:0;
+    }
+    .com-chilipeppr-interface-cnccontroller-stat .progress {
+        margin-bottom:0;
+    }
+    .com-chilipeppr-interface-cnccontroller-stat .stat-row {
+        padding-top:2px;
+    }
+    .com-chilipeppr-interface-cnccontroller-stat div.col.lblpad {
+        padding-left:10px;
+    }
+    .com-chilipeppr-interface-cnccontroller-stat  .stat-unit {
+        font-size:9px;
+        display:none;
+    }
+    .com-chilipeppr-interface-cnccontroller-stat  div.col.well {
+        margin-bottom:0px;
+        padding-left:5px;
+    }
+    .com-chilipeppr-interface-cnccontroller-stat  .stat-sm {
+        font-size:10px;
+    }
+
+    #com-chilipeppr-widget-grblaser .enabled{
+        background-color: #CCFF99;
+    }
+</style>
+
+
+
+<script type='text/javascript'>//<![CDATA[
+
+// Test this element. This code is auto-removed by the chilipeppr.load()
+cprequire_test(["inline:com-chilipeppr-widget-grblaser"], function (grbl) {
+    //console.log("test running of " + grbl.id);
+    grbl.init();
+    //testRecvline();
+
+    var sendGrblVersion = function() {
+        chilipeppr.publish("/com-chilipeppr-widget-serialport/recvline", {
+            dataline: "Grbl 0.8c"
+        });
+    };
+
+    chilipeppr.publish("/com-chilipeppr-widget-serialport/recvline", {dataline: "$0=755.906 (x, step/mm)\n" });
+    chilipeppr.publish("/com-chilipeppr-widget-serialport/recvline", {dataline: "$1=755.906 (y, step/mm)\n" });
+    chilipeppr.publish("/com-chilipeppr-widget-serialport/recvline", {dataline: "$2=755.906 (z, step/mm)\n" });
+    chilipeppr.publish("/com-chilipeppr-widget-serialport/recvline", {dataline: "$3=30 (step pulse, usec)\n" });
+    chilipeppr.publish("/com-chilipeppr-widget-serialport/recvline", {dataline: "$5=500.000 (default feed, mm/min)\n" });
+
+    var sendTestPositionData = function() {
+        setTimeout(function() {
+            // MPos:[-0.05,0.00,0.00],WPos:[-0.05,0.00,0.00]
+            chilipeppr.publish("/com-chilipeppr-widget-serialport/recvline", {
+                //dataline: "MPos:[-0.05,0.00,0.00],WPos:[-0.05,0.200,-1.00]"  //0.8a
+                dataline: "<idle,MPos:-0.05,0.00,0.00,WPos:-0.05,0.200,-1.00>"  //0.8c
+            });
+        }, 2000);
+
+    };
+    sendGrblVersion();
+    sendTestPositionData();
+
+} /*end_test*/ );
+
+function Queue(){var e=[];var t=0;this.getLength=function(){return e.length-t};this.isEmpty=function(){return e.length==0};this.enqueue=function(t){e.push(t)};this.dequeue=function(){if(e.length==0)return undefined;var n=e[t];if(++t*2>=e.length){e=e.slice(t);t=0}return n};this.peek=function(){return e.length>0?e[t]:undefined};this.sum=function(){for(var t=0,n=0;t<e.length;n+=e[t++]);return n};this.last=function(){return e[e.length-1]}}
+
+cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jquerycookie"], function () {
+    return {
+        id: "com-chilipeppr-widget-grblaser",
+        implements: {
+            "com-chilipeppr-interface-cnccontroller" : "The CNC Controller interface is a loosely defined set of publish/subscribe signals. The notion of an interface is taken from object-oriented programming like Java where an interface is defined and then specific implementations of the interface are created. For the sake of a Javascript mashup like what ChiliPeppr is, the interface is just a rule to follow to publish signals and subscribe to signals by different top-level names than the ID of the widget or element implementing the interface. Most widgets/elements will publish and subscribe on their own ID. In this widget we are publishing/subscribing on an interface name. If another controller like Grbl is defined by a member of the community beyond this widget for GRBL, this widget can be forked and used without other widgets needing to be changed and the user could pick a Grbl or GRBL implementation of the interface."
+        },
+        url: "http://fiddle.jshell.net/jarret/T6Bz5/show/light/",
+        fiddleurl: "http://jsfiddle.net/jarret/T6Bz5/",
+        name: "Widget / GRBL",
+        desc: "This widget shows the GRBL Buffer so other widgets can limit their flow of sending commands and other specific GRBL features.",
+        publish: {
+            '/com-chilipeppr-interface-cnccontroller/feedhold' : "Feedhold (Emergency Stop). This signal is published when user hits the Feedhold button for an emergency stop of the GRBL. Other widgets should see this and stop sending all commands such that even when the plannerresume signal is received when the user clears the queue or cycle starts again, they have to manually start sending code again. So, for example, a Gcode sender widget should place a pause on the sending but allow user to unpause.",
+            '/com-chilipeppr-interface-cnccontroller/plannerpause' : "This widget will publish this signal when it determines that the planner buffer is too full on the GRBL and all other elements/widgets need to stop sending data. You will be sent a /plannerresume when this widget determines you can start sending again. The GRBL has a buffer of 28 slots for data. You want to fill it up with around 12 commands to give the planner enough data to work on for optimizing velocities of movement. However, you can't overfill the GRBL or it will go nuts with buffer overflows. This signal helps you fire off your data and not worry about it, but simply pause the sending of the data when you see this signal. This signal does rely on the GRBL being in {qv:2} mode which means it will auto-send us a report on the planner every time it changes. This widget watches for those changes to generate the signal. The default setting is when we hit 12 remaining planner buffer slots we will publish this signal.",
+            '/com-chilipeppr-interface-cnccontroller/plannerresume' : "This widget will send this signal when it is ok to send data to the GRBL again. This widget watches the {qr:[val]} status report from the GRBL to determine when the planner buffer has enough room in it to send more data. You may not always get a 1 to 1 /plannerresume for every /plannerpause sent because we will keep sending /plannerpause signals if we're below threshold, but once back above threshold we'll only send you one /plannerresume. The default setting is to send this signal when we get back to 16 available planner buffer slots.",
+            '/com-chilipeppr-interface-cnccontroller/axes' : "This widget will normalize the GRBL status report of axis coordinates to send off to other widgets like the XYZ widget. The axes publish payload contains {x:float, y:float, z:float, a:float} If a different CNC controller is implemented, it should normalize the coordinate status reports like this model. The goal of this is to abstract away the specific controller implementation from generic CNC widgets.",
+            '/com-chilipeppr-interface-cnccontroller/units' : "This widget will normalize the GRBL units to the interface object of units {units: \"mm\"} or {units: \"inch\"}. This signal will be published on load or when this widget detects a change in units so other widgets like the XYZ widget can display the units for the coordinates it is displaying.",
+            '/com-chilipeppr-interface-cnccontroller/proberesponse': 'Publish a probe response with the coordinates triggered during probing, or an alarm state if the probe does not contact a surface'
+        },
+        subscribe: {
+            '/com-chilipeppr-interface-cnccontroller/jogdone' : 'We subscribe to a jogdone event so that we can fire off an exclamation point (!) to the GRBL to force it to drop all planner buffer items to stop the jog immediately.',
+            '/com-chilipeppr-interface-cnccontroller/recvgcode' : 'Subscribe to receive gcode from other widgets for processing and passing on to serial port'
+        },
+        foreignPublish: {
+            "/com-chilipeppr-widget-serialport/send" : "We send to the serial port certain commands like the initial configuration commands for the GRBL to be in the correct mode and to get initial statuses like planner buffers and XYZ coords. We also send the Emergency Stop and Resume of ! and ~"
+        },
+        foreignSubscribe: {
+            "/com-chilipeppr-widget-serialport/ws/onconnect" : "When we see a new connect, query for status.",
+            "/com-chilipeppr-widget-serialport/recvline" : "When we get a dataline from serialport, process it and fire off generic CNC controller signals to the /com-chilipeppr-interface-cnccontroller channel.",
+            "/com-chilipeppr-widget-serialport/send" : "Subscribe to serial send and override so no other subscriptions receive command."
+        },
+        plannerPauseAt: 128, // grbl planner buffer can handle 128 bytes of data
+        qLength: new Queue(),
+        qLine: new Queue(),
+        g_count: 0,
+        l_count: 0,
+        interval_id: 0,
+        config: [],
+        config_index: [],
+        buffer_name: "",
+        version: "",
+        offsets: {"x": 0.000, "y": 0.000, "z": 0.000},
+        init: function () {
+
+            this.setupUiFromCookie();
+            this.btnSetup();
+
+            this.forkSetup();
+
+            // setup recv pubsub event
+            // this is when we receive data in a per line format from the serial port
+            chilipeppr.subscribe("/com-chilipeppr-widget-serialport/recvline", this, function (msg) {
+                this.bufferPull(msg);
+            });
+
+            // setup onconnect pubsub event
+            chilipeppr.subscribe("/com-chilipeppr-widget-serialport/ws/onconnect", this, function (msg) {
+                //console.log("GRBL: got onconnect so will query for status");
+                this.initializeController();
+                //realtimeStatus("start");
+            });
+
+            // subscribe to jogdone so we can stop the planner buffer immediately
+            chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/jogdone", this, function (msg) {
+                //chilipeppr.publish("/com-chilipeppr-widget-serialport/send", '!\n');
+                this.sendCode('!\n');
+                setTimeout(function() {
+                    chilipeppr.publish('/com-chilipeppr-interface-cnccontroller/plannerresume', "");
+                }, 2);
+            });
+
+            chilipeppr.subscribe("/com-chilipeppr-widget-serialport/recvSingleSelectPort", this, function(port){
+                if(port !== null)
+                    this.buffer_name = port.BufferAlgorithm;
+                console.log("GRBL: Port received - " + port);
+                console.log("GRBL: Buffer algorithm set to: " + this.buffer_name);
+
+                if(this.buffer_name === "grbl"){
+                    $('#com-chilipeppr-widget-grblaser-body .com-chilipeppr-grbl-buffername').html("JSPS");
+                    $('#grbl-processed-lines').hide();
+                    $('#grbl-buffer-length').hide();
+                    $('#grbl-lines-queued').hide();
+                    $('#com-chilipeppr-widget-grblaser-body .clearbuffer').hide();
+                    $('#com-chilipeppr-widget-grblaser-body .realtime-status').hide();
+                } else {
+                    $('#com-chilipeppr-widget-grblaser-body .com-chilipeppr-grbl-buffername').html("Widget");
+                    $('#grbl-processed-lines').show();
+                    $('#grbl-buffer-length').show();
+                    $('#grbl-lines-queued').show();
+                    $('#com-chilipeppr-widget-grblaser-body .clearbuffer').show();
+                    $('#com-chilipeppr-widget-grblaser-body .realtime-status').show();
+                }
+
+            });
+
+            chilipeppr.subscribe("/com-chilipeppr-widget-serialport/send", this, this.bufferPush, 1); //highest priority
+
+            //call to determine the current serialport configuration
+            chilipeppr.publish("/com-chilipeppr-widget-serialport/requestSingleSelectPort","");
+        },
+        options: null,
+        setupUiFromCookie: function() {
+            // read vals from cookies
+            var options = $.cookie('com-chilipeppr-widget-grblaser-options');
+
+            if (true && options) {
+                options = $.parseJSON(options);
+                //console.log("GRBL: just evaled options: ", options);
+            } else {
+                options = {showBody: true};
+            }
+            this.options = options;
+            //console.log("GRBL: options:", options);
+
+
+        },
+        saveOptionsCookie: function() {
+            var options = {
+                showBody: this.options.showBody
+            };
+            var optionsStr = JSON.stringify(options);
+            //console.log("GRBL: saving options:", options, "json.stringify:", optionsStr);
+            // store cookie
+            $.cookie('com-chilipeppr-widget-grblaser-options', optionsStr, {
+                expires: 365 * 10,
+                path: '/'
+            });
+        },
+        showBody: function(evt) {
+            $('#com-chilipeppr-widget-grblaser .panel-body .stat-row').removeClass('hidden');
+            $('#com-chilipeppr-widget-grblaser .hidebody span').addClass('glyphicon-chevron-up');
+            $('#com-chilipeppr-widget-grblaser .hidebody span').removeClass('glyphicon-chevron-down');
+            if ((evt !== null)) {
+                this.options.showBody = true;
+                this.saveOptionsCookie();
+            }
+        },
+        hideBody: function(evt) {
+            $('#com-chilipeppr-widget-grblaser .panel-body .stat-row').addClass('hidden');
+            $('#com-chilipeppr-widget-grblaser .hidebody span').removeClass('glyphicon-chevron-up');
+            $('#com-chilipeppr-widget-grblaser .hidebody span').addClass('glyphicon-chevron-down');
+            if ((evt !== null)) {
+                this.options.showBody = false;
+                this.saveOptionsCookie();
+            }
+        },
+        btnSetup: function() {
+            // chevron hide body
+            var that = this;
+            $('#com-chilipeppr-widget-grblaser .hidebody').click(function(evt) {
+                //console.log("GRBL: hide/unhide body");
+                if ($('#com-chilipeppr-widget-grblaser .panel-body .stat-row').hasClass('hidden')) {
+                    // it's hidden, unhide
+                    that.showBody(evt);
+                } else {
+                    // hide
+                    that.hideBody(evt);
+                }
+            });
+            $('#com-chilipeppr-widget-grblaser .grbl-feedhold').click(function() {
+                //console.log("GRBL: feedhold");
+                that.sendCode('!');
+                // announce to other widgets that user hit e-stop
+                chilipeppr.publish('/com-chilipeppr-interface-cnccontroller/plannerpause', "");
+                chilipeppr.publish("/com-chilipeppr-interface-cnccontroller/feedhold", "");
+            });
+            $('#com-chilipeppr-widget-grblaser .grbl-cyclestart').click(function() {
+                //console.log("GRBL: cyclestart");
+                that.sendCode('~');
+                //may want to check if buffer queue is >128 before resuming planner.
+                chilipeppr.publish('/com-chilipeppr-interface-cnccontroller/plannerresume', "");
+            });
+
+            $('#com-chilipeppr-widget-grblaser .grbl-verbose').click(function() {
+                //console.log("GRBL: manual status update");
+                $('#com-chilipeppr-widget-grblaser .grbl-verbose').toggleClass("enabled");
+            });
+
+            $('#com-chilipeppr-widget-grblaser .grbl-reset').click(function() {
+                //console.log("GRBL: reset");
+                that.sendCode(String.fromCharCode(24));
+                chilipeppr.publish('/com-chilipeppr-interface-cnccontroller/plannerresume', "");
+            });
+
+            $('#com-chilipeppr-widget-grblaser-btnoptions').click(this.showConfigModal.bind(this));
+
+            $('#com-chilipeppr-widget-grblaser .btn-toolbar .btn').popover({
+                delay: 500,
+                animation: true,
+                placement: "auto",
+                trigger: "hover",
+                container: 'body'
+            });
+
+            $('#com-chilipeppr-widget-grblaser-body .clearbuffer').click("grbl", this.bufferClear.bind(this));
+            $('#com-chilipeppr-widget-grblaser-body .changeunit').click(this.changeUnit.bind(this));
+            $('#com-chilipeppr-widget-grblaser-body .realtime-status').click("grbl", this.realtimeStatus.bind(this));
+        },
+        showConfigModal: function() {
+            $('#grbl-config-div').empty();
+
+            this.config.forEach(function(config_element,index_num) {
+                $('#grbl-config-div').append('<div class="input-group"  style="width:400px;margin-bottom:2px;"><div class="input-group-addon" style="width:40px;padding:0px 6px;">$' + index_num + '</div><input class="form-control" style="height:20px;padding:0px 6px;width:100px;" id="com-chilipeppr-widget-grblaser-config-' + index_num +'" value="' + config_element[0] + '"/><span style="margin-left:10px;">' + config_element[1] + '</span></div>');},this);
+
+            $('#grbl-config-div').append('<br/><button class="btn btn-xs btn-default save-config">Save Settings To GRBL</button>');
+            $('.save-config').click(this.saveConfigModal.bind(this));
+            $('#com-chilipeppr-widget-grblaser-modal').modal('show');
+        },
+        hideConfigModal: function() {
+            $('#com-chilipeppr-widget-grblaser-modal').modal('hide');
+        },
+        saveConfigModal: function() {
+            console.log("GRBL: Save Settings");
+
+            this.config.forEach(function(config_element,index_num){
+                var command = '$' + index_num + '=' + $('#com-chilipeppr-widget-grblaser-config-' + index_num).val() + '\n';
+                this.config[index_num][0] = $('#com-chilipeppr-widget-grblaser-config-' + index_num).val();
+                this.sendCode(command);
+            },this);
+            console.log(this.config);
+            return true;
+        },
+        changeUnit: function(){
+            if(this.lastUnits == "mm")
+                this.lastUnits = "inch";
+            else
+                this.lastUnits = "mm";
+
+            chilipeppr.publish("/com-chilipeppr-interface-cnccontroller/units", this.lastUnits);
+        },
+        //formerly queryControllerForStatus
+        initializeController: function(isWithDelay) {
+            var that = this;
+            setTimeout(function() {
+                chilipeppr.publish("/com-chilipeppr-widget-serialport/requestSingleSelectPort",""); //Request port info
+                that.sendCode("$$\n");
+            }, 1000);
+        },
+        realtimeStatus: function() {
+            if(this.interval_id === 0){
+                var that = this;
+                this.interval_id = setInterval(function() {
+                    that.queryStatus(that);
+                }, 250);
+                console.log("GRBL: Realtime Refresh Started: " + this.interval_id.toString());
+                $('.realtime-status').text("Disable Realtime Status");
+            }
+            else {
+                clearInterval(this.interval_id);
+                this.interval_id = 0;
+                console.log("GRBL: Realtime Refresh Stopped");
+                $('.realtime-status').text("Enable Realtime Status");
+            }
+        },
+        bufferClear: function() {
+            //clear buffer variables (line count & queues).
+            //console.log("GRBL: Clear Buffer...");
+            $('.com-chilipeppr-grbl-sentline').text("0");
+            $('.com-chilipeppr-grbl-processedline').text("0");
+            $('.com-chilipeppr-grbl-buffer').text("0");
+            $('.com-chilipeppr-grbl-queue').text("0");
+            this.qLength = new Queue();
+            this.qLine = new Queue();
+            this.g_count = 0;
+            this.l_count = 0;
+        },
+        bufferPush: function (sendline) {
+            //console.log("GRBL: into buffer");
+
+            if(this.plannerLastEvent == "pause") {
+                console.log("GRBL: Some widget is still sending gcode commands in a pause state...");
+                return false;
+            }
+
+            //pass status request on to serial without incrementing buffer
+            if(sendline.indexOf("?") >= 0){
+                console.log("GRBL: Intercepted status request and removed from buffer");
+                this.sendCode(sendline);
+                return false;
+            }
+
+            //remove any reference to fourth axis from other chilipeppr widgets
+            if(sendline.indexOf('A0') >= 0)
+                sendline = sendline.replace('A0','');
+
+            //capture wrong format of home command from xyz axis, correct and continue to buffer.
+            if(sendline.indexOf("G28.2") >= 0){
+                console.log("GRBL: Intercepted home command and corrected");
+                sendline = "$H\n";
+            }
+
+            //capture wrong format of zero axis command from xyz axis, correct and continue to buffer.
+            if(sendline.indexOf("G28.3") >= 0){
+                console.log("GRBL: Intercepted zero axis and corrected");
+                sendline = "G92X0Y0Z0\n"; //Note currently this will return to zero in whatever coordinate system is active (absolute or work)
+            }
+
+            this.l_count++;
+            $('.com-chilipeppr-grbl-sentline').text(this.l_count.toString()); //update ui
+
+            //remove whitespace & cut off comments
+            var l_block = sendline.replace(/ /g,'');
+            if(l_block.indexOf("(") >= 0)
+                l_block = l_block.substring(0,l_block.indexOf("("));
+
+            if(l_block.length === 0 || l_block === '\n') //don't bother sending empty gcode to grbl
+                return false;
+            if(this.buffer_name !== "grbl"){
+                this.qLine.enqueue({lineno: this.l_count, dataline: l_block}); //save line number and original formatted gcode
+                this.qLength.enqueue(l_block.length+3); //increased padding number from 1 to 3 to see if it would help solve raspi buffering issues.
+            }
+
+            $('.com-chilipeppr-grbl-buffer').text(this.qLength.sum().toString()); //update ui
+            $('.com-chilipeppr-grbl-queue').text(this.qLine.getLength().toString()); //update ui
+
+            if(this.qLength.sum() >= this.plannerPauseAt-1 && this.buffer_name !== "grbl"){
+                this.publishPlannerPause();
+                //console.log("GRBL: Planner Paused - " + this.qLength.sum().toString());
+            }
+            else{
+                //console.log('GRBL: Line ' + this.l_count.toString() + ' -- ' + l_block); //log command for testing
+                this.sendCode(l_block);
+
+                //run a series of status queries for 3 seconds following each command @ 500ms intervals
+                //if(this.interval_id === 0){
+
+                //}
+            }
+            return false; //always return false to prevent other subscriptions from receiving the gcode
+        },
+        bufferPull: function (recvline) {
+            //console.log("GRBL: Message Received - " + recvline.dataline);
+            if (!(recvline.dataline) || recvline.dataline=='\n') {
+                //console.log("GRBL: got recvline but it's not a dataline, so returning.");
+                return true;
+            }
+
+            var msg = recvline.dataline;
+            //console.log("GRBL: Line Received -- " + recvline.dataline);
+            if (msg.indexOf("ok") >= 0 || msg.indexOf("error") >= 0 || msg.indexOf("PRB:") >= 0) { //expected response
+                //if queue not empty, pop oldest item off queues and increment completed gcode count.
+                if(this.qLine.getLength() > 0 && this.buffer_name !== "grbl") {
+                    var fincode = this.qLine.dequeue();
+                    console.log('GRBL: Line ' + fincode.lineno.toString() + ' -- ' + fincode.dataline + " --" + msg);
+                    this.g_count++;
+                    this.qLength.dequeue();
+                    //this.queryStatus();
+                    //console.log("GRBL: Line " + this.g_count.toString() + "removed from queue");
+                }
+
+                if(this.plannerLastEvent == "pause" && this.buffer_name !== "grbl")
+                //if we are still paused, but there is now room in the buffer, we need to send the last
+                //queued item to grbl and resume the planner to receive next commands
+                    if(this.qLength.sum() < this.plannerPauseAt-1) {
+                        //console.log("GRBL: Paused Line Sent To GRBL - " + this.qLine.last().dataline);
+                        //chilipeppr.publish("/com-chilipeppr-widget-serialport/send", this.qLine.last().dataline);
+                        this.sendCode(this.qLine.last().dataline);
+                        this.publishPlannerResume();
+                    }
+
+                if(msg.indexOf("PRB:") >= 0){
+                    var coords = msg.replace(/\[PRB:|\]|\n/g,"").split(",");
+                    //use current offsets to bring this value back to work coordinate system for proberesponse.
+                    chilipeppr.publish("/com-chilipeppr-interface-cnccontroller/proberesponse", {"x":parseFloat(coords[0]) - this.offsets.x,"y":parseFloat(coords[1]) - this.offsets.y,"z":parseFloat(coords[2]) - this.offsets.z});
+                }
+
+            }
+            else{ //when response isn't an ok or error, it's actionable information
+                if(msg.indexOf("MPos:") >= 0){
+                    //remove all unnecessary formatting from 0.8abc & 0.9f, split by comma to access each value//
+                    var rpt_array = msg.replace(/\[|\]|<|>|MPos:|WPos:|\n/g, "").split(",");
+
+                    if(this.version !== '0.8a')
+                        $('.com-chilipeppr-grbl-state').text(rpt_array[0]); //Update UI
+                    else
+                        $('.com-chilipeppr-grbl-state').text("Too Old - Upgrade GRBL!");
+
+                    var len = rpt_array.length;
+                    //store offsets of machine vs work coords (for probing and any other uses)
+                    if(len > 3){
+                        this.offsets.x = rpt_array[len-6]-rpt_array[len-3]; //x offset
+                        this.offsets.y = rpt_array[len-5]-rpt_array[len-2]; //y offset
+                        this.offsets.z = rpt_array[len-4]-rpt_array[len-1]; //z offset
+                        $('.com-chilipeppr-grbl-mcswcsoffset').html("X: " + this.offsets.x + "&nbsp;&nbsp;&nbsp;Y: " + this.offsets.y + "&nbsp;&nbsp;&nbsp;Z: " + this.offsets.z);
+                    }
+                    this.publishAxisStatus({"posx":parseFloat(rpt_array[len-3]),"posy":parseFloat(rpt_array[len-2]),"posz":parseFloat(rpt_array[len-1])});
+                }
+                if(msg.indexOf("Grbl") >= 0){
+                    this.version = msg.split(" ")[1];
+                    $('#com-chilipeppr-widget-grblaser .panel-title').text("GRBL (" + this.version + ")"); //update ui
+                }
+                else if(msg.search(/^\$[0-9][0-9]*=/g) >= 0){ //is a config report ($0=,$1=...etc)
+                    var tmp = msg.split(/ (.+)/); //break out config and description
+                    var val = tmp[0].replace("$","").split("="); //split config into variable id and value
+                    //console.log(val);
+                    this.config[parseInt(val[0],10)] = [parseFloat(val[1]), tmp[1]]; //save config value and description
+                    //console.log("GRBL: this.config = ");
+                    //console.log(this.config[0]);
+                }
+                else if(msg.indexOf("ALARM: Probe fail") >= 0){
+                    chilipeppr.publish("/com-chilipeppr-interface-cnccontroller/proberesponse", "alarm");
+                    //should we clear the buffer here as well, or resend queued commands afteras a reset to grbl is needed to clear this which will clear all buffered items?
+                }
+            }
+            //update ui
+            $('.com-chilipeppr-grbl-buffer').text(this.qLength.sum().toString());
+            $('.com-chilipeppr-grbl-queue').text(this.qLine.getLength().toString());
+            $('.com-chilipeppr-grbl-processedline').text(this.g_count.toString());
+        },
+
+        sendCode: function (sendline){
+            chilipeppr.unsubscribe("/com-chilipeppr-widget-serialport/send", this, this.bufferPush); //unsubscribe before publishing to serial port
+            chilipeppr.publish("/com-chilipeppr-widget-serialport/send", sendline); //send to serial port
+            console.log("GRBL: Code Sent - " + sendline);
+            chilipeppr.subscribe("/com-chilipeppr-widget-serialport/send", this, this.bufferPush, 1); //resubscribe with top priority
+        },
+        queryStatus: function(that){
+            //that = (typeof(that) !== 'undefined') ? this : that; //default to current object if none specified.
+            that.sendCode('?\n'); //request status/coordinates
+            //this.async_count++;
+            //console.log("GRBL: Increase Async - " + this.async_count.toString());
+            //this.sendCode('$G');
+            //this.async_count++;
+            //console.log("GRBL: Increase Async");
+        },
+        lastUnits: "mm",
+        isShowingStats: true,
+        publishAxisStatus: function(sr) {
+            // build normalized interface object
+            var axes = {
+                x: sr.posx !== undefined ? sr.posx : null,
+                y: sr.posy !== undefined ? sr.posy : null,
+                z: sr.posz !== undefined ? sr.posz : null,
+                a: sr.posa !== undefined ? sr.posa : null,
+                type: "work"
+            };
+            // also check if it's the mpox/mpoy/mpoz form (machine coords instead of work coords)
+            /*
+             if ("mpox" in sr || "mpoy" in sr || "mpoz" in sr || "mpoa" in sr) {
+             // we have machine coords
+             axes.x = "mpox" in sr ? sr.mpox : null;
+             axes.y = "mpoy" in sr ? sr.mpoy : null;
+             axes.z = "mpoz" in sr ? sr.mpoz : null;
+             axes.a = "mpoa" in sr ? sr.mpoa : null;
+             axes.type = "machine";
+             }
+             */
+
+            chilipeppr.publish("/com-chilipeppr-interface-cnccontroller/axes", axes);
+
+            // also check if units are attached and are different from last units
+            // [unit] units_mode - 0=inch, 1=mm
+            if ("unit" in sr) {
+                var units = sr.unit === 0 ? "inch" : "mm";
+
+                // yes we have units. see if changed and thus why we should publish
+                if (this.lastUnits != units) {
+                    //console.log("GRBL: we have a unit change. publish it. units:", units);
+                    chilipeppr.publish("/com-chilipeppr-interface-cnccontroller/units", units);
+                }
+            }
+
+            // check other stats if user is showing full stats
+            //if (this.isShowingStats) {
+            //    this.processStats(sr);
+            //}
+
+        },
+        statEls : null,
+        processStats: function(sr) {
+            //console.log("GRBL: processStats. sr:", sr);
+            if (this.statEls === null) this.statGetDomElements(); // lazy load stat dom for speed
+            var e = this.statEls;
+            // sample stats
+            // '{"r":{"sr":{"line":0,"vel":0.00,"mpox":0.005,"mpoy":10.460,"mpoz":0.304,"mpoa":0.000,"coor":1,"ofsa":0.000,"ofsx":0.000,"ofsy":0.000,"ofsz":0.000,"dist":0,"unit":1,"stat":3,"homz":0,"homy":0,"homx":0,"momo":1},"f":[1,0,10,5440]}}'
+            // {"r":{"sr":{"line":0,"posx":0.000,"posy":0.028,"posz":0.000,"posa":0.000,"feed":0.00,"vel":0.00,"unit":1,"coor":1,"dist":0,"frmo":0,"momo":1,"stat":4},"f":[1,0,10,4683]}}
+            if ("line" in sr) e.line.text(sr.line);
+            if ("feed" in sr) e.feedrate.text(sr.feed);
+            if ("vel" in sr) e.velocity.text(sr.vel);
+            if ("dist" in sr) e.distance.text(sr.dist === 0 ? "Absolute" : "Incremental");
+            if ("unit" in sr) e.units.text(sr.unit === 0 ? "Inch" : "mm");
+            if ("stat" in sr) {
+                var state = ["Initializing", "Ready", "Shutdown", "Stop", "End", "Run", "Hold", "Homing" ];
+                e.state.text(state[sr.stat]);
+            }
+            if ("momo" in sr) {
+                var motion = ["Traverse", "Straight", "CW Arc", "CCW Arc"];
+                e.motion.text(motion[sr.momo]);
+            }
+            if ("coor" in sr) {
+                var coor = ["G53", "G54", "G55", "G56", "G57", "G58", "G59"];
+                e.coords.text(coor[sr.coor]);
+            }
+            if ("plan" in sr) {
+                var plane = ["XY", "XZ", "YZ"];
+                e.plane.text(plane[sr.plan]);
+            }
+            if ("path" in sr) {
+                var path = ["Exact Stop", "Exact Path", "Continuous"];
+                e.path.text(path[sr.path]);
+            }
+
+
+        },
+        statGetDomElements: function() {
+            //console.log("GRBL: statGetDomElements. this should only get called once.");
+            this.statEls = {
+                line: $('.com-chilipeppr-interface-cnccontroller-stat .stat-line'),
+                velocity: $('.com-chilipeppr-interface-cnccontroller-stat .stat-velocity'),
+                feedrate: $('.com-chilipeppr-interface-cnccontroller-stat .stat-feedrate'),
+                state: $('.com-chilipeppr-interface-cnccontroller-stat .stat-state'),
+                units: $('.com-chilipeppr-interface-cnccontroller-stat .stat-units'),
+                coords: $('.com-chilipeppr-interface-cnccontroller-stat .stat-coords'),
+                motion: $('.com-chilipeppr-interface-cnccontroller-stat .stat-motion'),
+                plane: $('.com-chilipeppr-interface-cnccontroller-stat .stat-plane'),
+                path: $('.com-chilipeppr-interface-cnccontroller-stat .stat-path'),
+                distance: $('.com-chilipeppr-interface-cnccontroller-stat .stat-distance')
+            };
+        },
+        plannerLastEvent: "resume",
+        processPlannerStatus: function(qr) {
+            //console.log("processPlannerStatus. qr:", qr);
+            // see if we're below our happy threshold of where we'll allow the planner to get
+            if (qr <= this.plannerPauseAt) {
+                // we need to send pause signal
+                if (this.plannerLastEvent == "resume")
+                    this.publishPlannerPause();
+            } else if (qr >= this.plannerResumeAt) {
+                // we need to send resume signal
+                // but only if our last send was pause
+                if (this.plannerLastEvent == "pause")
+                    this.publishPlannerResume();
+            }
+
+            // update ui
+            this.updatePlannerProgBar(qr);
+        },
+        publishPlannerPause: function() {
+            // tell other widgets to pause their sending because we're too far into
+            // filling up the planner buffer
+            this.plannerLastEvent = "pause";
+            chilipeppr.publish("/com-chilipeppr-interface-cnccontroller/plannerpause", "");
+        },
+        publishPlannerResume: function() {
+            // tell other widgets they can send again
+            this.plannerLastEvent = "resume";
+            chilipeppr.publish("/com-chilipeppr-interface-cnccontroller/plannerresume", "");
+        },
+        progBar: null,
+        progBarLbl: null,
+        updatePlannerProgBar: function(qr) {
+            if (this.progBar === null) {
+                this.progBar = $('#com-chilipeppr-widget-grblaser .progress-bar');
+                this.progBarLbl = this.progBar.find('span');
+            }
+            // calc %
+            var pct = (qr / 28) * 100;
+            this.progBar.css('width', pct + "%");
+            this.progBarLbl.text(qr);
+
+            // color code based on planner fullness
+            if (qr < this.plannerPauseAt) {
+                this.progBar.addClass('progress-bar-danger');
+                this.progBar.removeClass('progress-bar-warning');
+            } else if (qr <= this.plannerResumeAt) {
+                this.progBar.addClass('progress-bar-warning');
+                this.progBar.removeClass('progress-bar-danger');
+            } else {
+                this.progBar.removeClass('progress-bar-warning');
+                this.progBar.removeClass('progress-bar-danger');
+            }
+
+        },
+        forkSetup: function () {
+            var topCssSelector = '#com-chilipeppr-widget-grblaser';
+
+            //$(topCssSelector + ' .fork').prop('href', this.fiddleurl);
+            //$(topCssSelector + ' .standalone').prop('href', this.url);
+            //$(topCssSelector + ' .fork-name').html(this.id);
+            $(topCssSelector + ' .panel-title').popover({
+                title: this.name,
+                content: this.desc,
+                html: true,
+                delay: 200,
+                animation: true,
+                trigger: 'hover',
+                placement: 'auto'
+            });
+
+            var that = this;
+
+            chilipeppr.load("http://fiddle.jshell.net/chilipeppr/zMbL9/show/light/", function () {
+                require(['inline:com-chilipeppr-elem-pubsubviewer'], function (pubsubviewer) {
+                    pubsubviewer.attachTo($('#com-chilipeppr-widget-grblaser .panel-heading .dropdown-menu'), that);
+                });
+            });
+
+        }
+    };
+});
+//]]>
+
+</script>
+
+
+</head>
+<body>
+<div id="com-chilipeppr-widget-grblaser" class="panel panel-default">
+    <div class="panel-heading">
+        <div class="btn-toolbar pull-right" role="toolbar" >
+            <div class="btn-group">
+                <button type="button" class="btn btn-xs btn-default btn-danger grbl-feedhold" data-delay="500" data-animation="true" data-placement="auto" data-container="body" data-trigger="hover" data-title="Feedhold" data-content="Stop movement immediately. Maintains positional accuracy. Sends ! command to GRBL which jumps past the planner buffer so you get immediate stop. Movement can be resumed with ~ command. If you want to jog you should flush queue with CTRL+X."><span class="glyphicon glyphicon-stop"></span></button>
+                <button type="button" class="btn btn-xs btn-default grbl-cyclestart"  data-delay="500" data-animation="true" data-placement="auto" data-container="body" data-trigger="hover" data-title="Cycle Start" data-content="Resume movement from stopping point"><span class="">~</span></button>
+                <button type="button" class="btn btn-xs btn-default grbl-verbose"  data-delay="500" data-animation="true" data-placement="auto" data-container="body" data-trigger="hover" data-title="Toggle Verbose Output" data-content="Toggle verbose mode to show query responses in console - defaults to disabled, green when enabled"><span class="">v</span></button>
+                <!--<button type="button" class="btn btn-xs btn-default grbl-queueflush"  data-delay="500" data-animation="true" data-placement="auto" data-container="body" data-trigger="hover" data-title="Queue Flush" data-content="Empty planner buffer. Used for jogging and other cycles"><span class="">%</span></button>-->
+                <button type="button" class="btn btn-xs btn-default grbl-reset" data-toggle="popover" data-placement="auto" data-container="body" data-content="GRBL Soft Reset" data-trigger="hover" ><span class=""></span>Ctrl+X</button><!--glyphicon glyphicon-refresh-->
+                <button type="button" id="com-chilipeppr-widget-grblaser-btnoptions" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-cog"></span></button>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-xs btn-default hidebody"><span class="glyphicon glyphicon-chevron-up"></span></button>
+            </div>
+            <div class="btn-group">
+                <div class="dropdown">
+                    <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <!-- <li class="divider"></li> -->
+                        <!-- <li role="presentation" class="dropdown-header fork-name"></li>
+                        <li><a href="" target="_blank" class="standalone">View Widget Standalone</a></li>
+                        <li><a href="" target="_blank" class="fork">Fork Widget</a></li> -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <span class="panel-title" data-toggle="popover">GRBL</span>
+    </div>
+    <div id="com-chilipeppr-widget-grblaser-body" class="panel-body">
+        <div id="grbl-current-state">Current State: <span class="com-chilipeppr-grbl-state">(Disconnected)</span></div>
+        <div id="grbl-mcs-wcs-offsets">Machine/Work Offsets: <span class="com-chilipeppr-grbl-mcswcsoffset"></span></div>
+        <div id="grbl-buffer-name">Buffer: <span class="com-chilipeppr-grbl-buffername"></span></div>
+        <div id="grbl-sent-lines">Sent Lines: <span class="com-chilipeppr-grbl-sentline">0</span></div>
+        <div id="grbl-processed-lines">Processed Lines: <span class="com-chilipeppr-grbl-processedline">0</span></div>
+        <div id="grbl-buffer-length">Buffer Length: <span class="com-chilipeppr-grbl-buffer">0</span></div>
+        <div id="grbl-lines-queued">Lines Queued: <span class="com-chilipeppr-grbl-queue">0</span></div>
+        <button class="btn btn-xs btn-default clearbuffer ">Clear Buffer</button>
+        <button class="btn btn-xs btn-default changeunit">Change Unit</button>
+        <button class="btn btn-xs btn-default realtime-status">Enable Realtime Status</button>
+    </div>
+    <div id="com-chilipeppr-widget-grblaser-ftr" class="panel-footer" style="font-size:10px;">Work in progress - to report issues please email <a href="mailto:jarret.luft@gmail.com">jarret.luft@gmail.com</a> (v0.7)</div>
+</div>
+
+<div class="modal fade " id="com-chilipeppr-widget-grblaser-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">GRBL Config Settings</h4>
+            </div>
+            <div class="modal-body">
+                <p style="color:red;">WARNING: This feature is extremely unstable and may wipe GRBL settings. Back up all output from $$ before attempting to save config through this window.</p>
+                <div id="grbl-config-div" class="form-horizontal" role="form">
+
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+
+
+</html>
+
