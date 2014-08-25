@@ -24,11 +24,9 @@ cprequire_test(["inline:com-chilipeppr-widget-grblaser"], function (grbl) {
 
     var sendLaserOnOff = function(isOn) {
         setTimeout(function() {
-            chilipeppr.publish("/com-chilipeppr-widget-serialport/send", {
-                dataline: (isOn) ? "M5" : "M3"
-            });
+            grbl.sendCode((isOn) ? grbl.CODE.TOOL_OFF : grbl.CODE.TOOL_ON);
             sendLaserOnOff(!isOn);
-        }, 2000);
+        }, 10000);
     };
 
     sendLaserOnOff();
@@ -62,29 +60,31 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         name: "Widget / GRBLaser",
         desc: "This widget adds GRBL laser specific functionalities and options",
         publish: {
+            '/com-chilipeppr-widget-grblaser/laserOnOffChange' : "This signal is published when the laser status has changed from on to off or vice versa"
         },
         subscribe: {
         },
         foreignPublish: {
-            '/com-chilipeppr-widget-grblaser/laserOnOffChange' : "This signal is published when the laser status has changed from on to off or vice versa"        },
+        },
         foreignSubscribe: {
             "/com-chilipeppr-widget-serialport/recvline" : "When we get a dataline from the serial port",
             "/com-chilipeppr-widget-serialport/send" : "Subscribe to serial send and check that the laser is ON/OFF.",
             "/com-chilipeppr-widget-3dviewer/sceneReloaded" : "Subscribe to serial send and check that the laser is ON/OFF."
         },
-        checkLaserStatusChange: function (sendline) {
-            //pass status request on to serial without incrementing buffer
-            if (!sendline || !sendline.dataline)
-                return;
-
-            var msg = sendline.dataline.trim();
-            if (msg === "M3"){
+        CODE : {
+            TOOL_ON : "M3",
+            TOOL_OFF : "M5"
+        },
+        checkLaserStatusChange: function (rawMsg) {
+            // rawMsg might have spaces and new lines
+            var msg = rawMsg.replace(/(^\s+|\s+$|\r\n|\n|\r)/gm,"");
+            if (msg === this.CODE.TOOL_ON){
                 if (!this.laserStatus.on) {
                     console.log("GRBLaser: Laser Switched to ON");
                     chilipeppr.publish("/com-chilipeppr-widget-grblaser/laserOnOffChange", true);
                 }
                 this.laserStatus.on = true;
-            } else if (msg === "M5") {
+            } else if (msg === this.CODE.TOOL_OFF) {
                 if (this.laserStatus.on) {
                     console.log("GRBLaser: Laser Switched to OFF");
                     chilipeppr.publish("/com-chilipeppr-widget-grblaser/laserOnOffChange", false);
@@ -111,10 +111,29 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             console.log("Bounding box min=" + JSON.stringify(boundingBox.min) + " max=" +
                     JSON.stringify(boundingBox.max));
         },
+        /** Not really working as intended since GRBL status != tool status
+         */
+        queryCurrentGrblStatus: function () {
+            var that = this;
+            var statusFinder = function (line) {
+                // we got the data (may not be from our request but oh well :)
+                var statusRegex = /(Idle|Queue|Run|Hold|Home|Alarm|Check).*/;
+                var match = statusRegex.exec(line);
+                if (match) {
+                    var grblStatus = match[1];
+                    chilipeppr.unsubscribe("/com-chilipeppr-widget-serialport/recvline", that, statusFinder);
+                }
+            };
+            chilipeppr.subscribe("/com-chilipeppr-widget-serialport/recvline", this, statusFinder);
+            // <Idle,MPos:0.000,0.000,0.000,WPos:0.000,0.000,0.000>
+            this.sendCode("?");
+        },
         init: function () {
             this.setupUiFromCookie();
             this.btnSetup();
             this.forkSetup();
+            // TODO(dchu): We still need to figure out the current tool status from GRBL
+//            this.queryCurrentGrblStatus();
             chilipeppr.subscribe("/com-chilipeppr-widget-serialport/send", this, this.checkLaserStatusChange);
             chilipeppr.subscribe("/com-chilipeppr-widget-grblaser/laserOnOffChange", this, this.updateLaserStatusIndication);
             chilipeppr.subscribe("/com-chilipeppr-widget-3dviewer/sceneReloaded", this, this.setBoundingBox);
@@ -130,7 +149,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             // read vals from cookies
             var options = $.cookie('com-chilipeppr-widget-grblaser-options');
 
-            if (true && options) {
+            if (options) {
                 options = $.parseJSON(options);
                 //console.log("GRBL: just evaled options: ", options);
             } else {
@@ -219,8 +238,16 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
                     that.hideBody(evt);
                 }
             });
+
             $('#com-chilipeppr-widget-grblaser .go-scale').click(function() {
                 that.sendGoScaleGcode();
+            });
+
+            $('#com-chilipeppr-widget-grblaser .laser-on-button').click(function() {
+                that.sendCode(that.CODE.TOOL_ON);
+            });
+            $('#com-chilipeppr-widget-grblaser .laser-off-button').click(function() {
+                that.sendCode(that.CODE.TOOL_OFF);
             });
 
             $('#com-chilipeppr-widget-grblaser .btn-toolbar .btn').popover({
@@ -241,7 +268,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", title, message);
         },
         sendCode: function (sendline){
-            chilipeppr.publish("/com-chilipeppr-widget-serialport/send", sendline); //send to serial port
+            chilipeppr.publish("/com-chilipeppr-widget-serialport/send", sendline + "\n"); //send to serial port
         },
         forkSetup: function () {
             var topCssSelector = '#com-chilipeppr-widget-grblaser';
@@ -279,8 +306,25 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         <span class="panel-title" data-toggle="popover">Laser Controls</span>
     </div>
     <div id="com-chilipeppr-widget-grblaser-body" class="panel-body">
-        <div id="grblaser-current-state">Laser is <span class="label label-danger com-chilipeppr-grblaser-state-on">ON</span><span class="label label-success com-chilipeppr-grblaser-state-off">OFF</span></div>
-        <button class="btn btn-xs btn-default go-scale">Go Scale</button>
+        <div class="row">
+            <div class="col-sm-4">
+                <div id="grblaser-current-state">Laser is <span class="label label-danger com-chilipeppr-grblaser-state-on">ON</span><span class="label label-success com-chilipeppr-grblaser-state-off">OFF</span></div>
+            </div>
+            <div class="col-sm-8">
+                <div class="btn-group">
+                    <button class="btn btn-xs btn-danger laser-on-button"><span class="glyphicon glyphicon-fire"> </span> Turn Laser ON</button>
+                    <button class="btn btn-xs btn-success laser-off-button"><span class="glyphicon glyphicon-remove"> </span> Turn Laser OFF</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-toolbar" role="toolbar">
+            <div class="btn-group">
+                <button class="btn btn-xs btn-default go-scale">Go Scale</button>
+            </div>
+
+        </div>
+
     </div>
     <div id="com-chilipeppr-widget-grblaser-ftr" class="panel-footer" style="font-size:10px;">Work in progress - to report issues please email <a href="mailto:dattanchu@gmail.com">dattanchu@gmail.com</a> (v0.1)</div>
 </div>
