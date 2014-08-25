@@ -318,6 +318,7 @@
                             reader.onload = function () {
                                 console.log("opening file. reader:", reader);
                                 that.openGCodeFromText(reader.result);
+                                that.signalSceneReloaded()
                             };
                             reader.readAsText(files[0]);
                         }
@@ -329,11 +330,13 @@
                 var lastLoaded = localStorage.getItem('last-loaded');
                 if (lastImported) {
                     that.openGCodeFromText(lastImported);
+                    that.signalSceneReloaded();
                 } else {
                     //console.log("would have opened octocat");
                     //that.openGCodeFromPath(lastLoaded || 'examples/octocat.gcode');
                     console.log("loading chilipeppr logo");
                     that.openGCodeFromPath(lastLoaded || 'http://www.chilipeppr.com/3d/chilipepprlogo.nc');
+                    that.signalSceneReloaded();
                 }
 
                 // setup toolbar buttons
@@ -477,7 +480,7 @@
             },
             onPubSubFileLoaded: function(txt) {
                 this.openGCodeFromText(txt);
-                chilipeppr.publish("/" + this.id + "/sceneReloaded", this.object.userData.bbbox2);
+                this.signalSceneReloaded();
             },
             error: function (msg) {
                 alert(msg);
@@ -519,6 +522,8 @@
                     that.onUnitsChanged();
                     localStorage.setItem('last-loaded', path);
                     localStorage.removeItem('last-imported');
+
+                    that.signalSceneReloaded();
                 });
             },
             openGCodeFromText: function (gcode) {
@@ -1920,6 +1925,9 @@
                         }
                     }
                 }
+            },
+            signalSceneReloaded: function () {
+                chilipeppr.publish("/" + this.id + "/sceneReloaded", this.object.userData.bbbox2);
             },
             createObjectFromGCode: function (gcode, indxMax) {
                 //debugger;

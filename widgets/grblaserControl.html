@@ -29,7 +29,6 @@ cprequire_test(["inline:com-chilipeppr-widget-grblaser"], function (grbl) {
             });
             sendLaserOnOff(!isOn);
         }, 2000);
-
     };
 
     sendLaserOnOff();
@@ -48,6 +47,10 @@ cprequire_test(["inline:com-chilipeppr-widget-grblaser"], function (grbl) {
                 }
             }
     );
+
+    setTimeout(function() {
+        console.log("Bounding box is ready= " + grbl.goScale.ready);
+    }, 1000)
 
 } /*end_test*/ );
 
@@ -102,17 +105,19 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
                 $('#grblaser-current-state').find('.com-chilipeppr-grblaser-state-off').show();
             }
         },
+        setBoundingBox: function(boundingBox) {
+            this.goScale.boundingBox = boundingBox;
+            this.goScale.ready = true;
+            console.log("Bounding box min=" + JSON.stringify(boundingBox.min) + " max=" +
+                    JSON.stringify(boundingBox.max));
+        },
         init: function () {
             this.setupUiFromCookie();
             this.btnSetup();
             this.forkSetup();
             chilipeppr.subscribe("/com-chilipeppr-widget-serialport/send", this, this.checkLaserStatusChange);
             chilipeppr.subscribe("/com-chilipeppr-widget-grblaser/laserOnOffChange", this, this.updateLaserStatusIndication);
-            chilipeppr.subscribe("/com-chilipeppr-widget-3dviewer/sceneReloaded", this, function(boundingBox) {
-                this.goScale.boundingBox = boundingBox;
-                console.log("Bounding box min=" + JSON.stringify(boundingBox.min) + " max=" +
-                        JSON.stringify(boundingBox.max));
-            });
+            chilipeppr.subscribe("/com-chilipeppr-widget-3dviewer/sceneReloaded", this, this.setBoundingBox);
 
             // initial publish to sync up
             chilipeppr.publish("/com-chilipeppr-widget-grblaser/laserOnOffChange", this.laserStatus.on);
@@ -133,8 +138,6 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             }
             this.options = options;
             //console.log("GRBL: options:", options);
-
-
         },
         saveOptionsCookie: function() {
             var options = {
