@@ -110,7 +110,8 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             chilipeppr.subscribe("/com-chilipeppr-widget-grblaser/laserOnOffChange", this, this.updateLaserStatusIndication);
             chilipeppr.subscribe("/com-chilipeppr-widget-3dviewer/sceneReloaded", this, function(boundingBox) {
                 this.goScale.boundingBox = boundingBox;
-                console.log("Bounding box min=" + bbox.min + " max=" + bbox.max);
+                console.log("Bounding box min=" + JSON.stringify(boundingBox.min) + " max=" +
+                        JSON.stringify(boundingBox.max));
             });
 
             // initial publish to sync up
