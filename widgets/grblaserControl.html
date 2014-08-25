@@ -34,6 +34,21 @@ cprequire_test(["inline:com-chilipeppr-widget-grblaser"], function (grbl) {
 
     sendLaserOnOff();
 
+    chilipeppr.publish("/com-chilipeppr-widget-3dviewer/sceneReloaded",
+            {
+                min: {
+                    x: 100,
+                    y: 200,
+                    z: 300
+                },
+                max: {
+                    x: 1000,
+                    y: 1001,
+                    z: 1002
+                }
+            }
+    );
+
 } /*end_test*/ );
 
 cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jquerycookie"], function () {
@@ -51,7 +66,8 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             '/com-chilipeppr-widget-grblaser/laserOnOffChange' : "This signal is published when the laser status has changed from on to off or vice versa"        },
         foreignSubscribe: {
             "/com-chilipeppr-widget-serialport/recvline" : "When we get a dataline from the serial port",
-            "/com-chilipeppr-widget-serialport/send" : "Subscribe to serial send and check that the laser is ON/OFF."
+            "/com-chilipeppr-widget-serialport/send" : "Subscribe to serial send and check that the laser is ON/OFF.",
+            "/com-chilipeppr-widget-3dviewer/sceneReloaded" : "Subscribe to serial send and check that the laser is ON/OFF."
         },
         checkLaserStatusChange: function (sendline) {
             //pass status request on to serial without incrementing buffer
@@ -92,6 +108,10 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             this.forkSetup();
             chilipeppr.subscribe("/com-chilipeppr-widget-serialport/send", this, this.checkLaserStatusChange);
             chilipeppr.subscribe("/com-chilipeppr-widget-grblaser/laserOnOffChange", this, this.updateLaserStatusIndication);
+            chilipeppr.subscribe("/com-chilipeppr-widget-3dviewer/sceneReloaded", this, function(boundingBox) {
+                this.goScale.boundingBox = boundingBox;
+                console.log("Bounding box min=" + bbox.min + " max=" + bbox.max);
+            });
 
             // initial publish to sync up
             chilipeppr.publish("/com-chilipeppr-widget-grblaser/laserOnOffChange", this.laserStatus.on);
@@ -145,6 +165,43 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
                 this.saveOptionsCookie();
             }
         },
+        goScale : {
+            ready : false, // won't be set to true until we have a bounding box on a object
+            boundingBox: null,
+            refBoundingBoxInScene: null, // Keep the ref so we don't add the bounding box multiple times. NOT USED.
+            moveCommand : "G0"
+        },
+        sendGoScaleGcode: function () {
+            if (!this.goScale.ready) {
+                this.messageUser("Error go scale", "Bounding box is not available for go scale, did you load an object?");
+            } else {
+                // TODO(dchu): Perhaps some preconditions in case 3dviewerWidget changes how it stores bbox
+                // TODO(dchu): Check that we are using absolute coordinate (i.e. G90) or switch to it and switch back to (G91)
+                var bbox = this.goScale.boundingBox;
+                // TODO(dchu): Perhaps warning the user to retract their tool head? :-p
+                this.sendCode(this.goScale.moveCommand + " X" + bbox.min.x + " Y" + bbox.min.y);
+                this.sendCode(this.goScale.moveCommand + " X" + bbox.min.x + " Y" + bbox.max.y);
+                this.sendCode(this.goScale.moveCommand + " X" + bbox.max.x + " Y" + bbox.max.y);
+                this.sendCode(this.goScale.moveCommand + " X" + bbox.max.x + " Y" + bbox.min.y);
+                this.sendCode(this.goScale.moveCommand + " X" + bbox.min.x + " Y" + bbox.min.y);
+            }
+
+            // NOTE(dchu): This solution is not as good since we are requesting data that is already available
+//            if (!this.goScale.ready) {
+//                this.messageUser("Processing Bounding Box", "Getting bounding box from scene");
+//                chilipeppr.subscribe("/com-chilipeppr-widget-3dviewer/recv3dObject", function(obj) {
+//                    console.log("3d obj:", obj);
+//                    var boundingBox = new THREE.BoundingBoxHelper(obj, 0xff0000);
+//                    boundingBox.update();
+//                    this.goScale.refBoundingBoxInScene = boundingBox;
+//
+//                    // Create visible bounding box
+//                    chilipeppr.publish("/com-chilipeppr-widget-3dviewer/sceneadd", boundingBox);
+//                    this.messageUser("Done Bounding Box", "Bounding box found. Sending move gcode ...")
+//                }.bind(this));
+//                chilipeppr.publish("/com-chilipeppr-widget-3dviewer/request3dObject", "");
+//            }
+        },
         btnSetup: function() {
             // chevron hide body
             var that = this;
@@ -159,7 +216,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
                 }
             });
             $('#com-chilipeppr-widget-grblaser .go-scale').click(function() {
-                console.log("GRBLaser: GO SCALE is not implemented.");
+                that.sendGoScaleGcode();
             });
 
             $('#com-chilipeppr-widget-grblaser .btn-toolbar .btn').popover({
@@ -170,11 +227,17 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
                 container: 'body'
             });
         },
+        /**
+         * Just a wrapper for publishing a message that our user can see
+         * @see flashmsg in Bootscript for an example
+         * @param title
+         * @param message
+         */
+        messageUser: function(title, message) {
+            chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", title, message);
+        },
         sendCode: function (sendline){
-            chilipeppr.unsubscribe("/com-chilipeppr-widget-serialport/send", this, this.bufferPush); //unsubscribe before publishing to serial port
             chilipeppr.publish("/com-chilipeppr-widget-serialport/send", sendline); //send to serial port
-            console.log("GRBL: Code Sent - " + sendline);
-            chilipeppr.subscribe("/com-chilipeppr-widget-serialport/send", this, this.bufferPush, 1); //resubscribe with top priority
         },
         forkSetup: function () {
             var topCssSelector = '#com-chilipeppr-widget-grblaser';
