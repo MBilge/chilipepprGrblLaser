@@ -56,7 +56,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
     return {
         id: "com-chilipeppr-widget-grblaser",
         url: "https://raw.githubusercontent.com/dattanchu/chilipepprGrblLaser/master/widgets/grblaserControl.html",
-        fiddleurl: "https://raw.githubusercontent.com/dattanchu/chilipepprGrblLaser/master/widgets/grblaserControl.html",
+        fiddleurl: "https://github.com/dattanchu/chilipepprGrblLaser/blob/master/widgets/grblaserControl.html",
         name: "Widget / GRBLaser",
         desc: "This widget adds GRBL laser specific functionalities and options",
         publish: {
@@ -69,7 +69,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         foreignSubscribe: {
             "/com-chilipeppr-widget-serialport/recvline" : "When we get a dataline from the serial port",
             "/com-chilipeppr-widget-serialport/send" : "Subscribe to serial send and check that the laser is ON/OFF.",
-            "/com-chilipeppr-widget-3dviewer/sceneReloaded" : "Subscribe to serial send and check that the laser is ON/OFF."
+            "/com-chilipeppr-widget-3dviewer/sceneReloaded" : "Subscribe to 3d widget scene reloaded to get new bounding box"
         },
         CODE : {
             TOOL_ON : "M3",
@@ -331,11 +331,13 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
 <div id="com-chilipeppr-widget-grblaser" class="panel panel-default">
     <div class="panel-heading">
         <span class="panel-title" data-toggle="popover">Laser Controls</span>
-        <div class="btn-group">
-            <div class="dropdown">
-                <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
-                <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                </ul>
+        <div class="btn-toolbar pull-right" role="toolbar" >
+            <div class="btn-group">
+                <div class="dropdown">
+                    <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
