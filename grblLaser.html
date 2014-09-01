@@ -377,7 +377,7 @@ cprequire(["chilipeppr_ready"], function () {
     // 3D Viewer
     // http://jsfiddle.net/chilipeppr/y3HRF
     chilipeppr.load("#com-chilipeppr-3dviewer",
-            "https://raw.githubusercontent.com/dattanchu/chilipepprGrblLaser/master/references/3dviewerWidget.html",
+            "http://fiddle.jshell.net/chilipeppr/y3HRF/show/light/",
 
             function () {
                 console.log("got callback done loading 3d");
@@ -392,7 +392,7 @@ cprequire(["chilipeppr_ready"], function () {
 
                             // Ok, do someting whacky. Try to move the 3D Viewer
                             // Control Panel to the center column
-                            setTimeout(function () {
+                            setTimeout(function() {
                                 var element = $('#com-chilipeppr-3dviewer .panel-heading').detach();
                                 $('#com-chilipeppr-3dviewer').addClass("noheight");
                                 $('#com-chilipeppr-widget-3dviewer').addClass("nomargin");
@@ -405,21 +405,16 @@ cprequire(["chilipeppr_ready"], function () {
                             var mytimeout = null;
                             $(window).on('resize', function (evt) {
                                 //console.log("3d view force resize");
-                                if (mytimeout !== undefined && mytimeout !== null) {
+                                if (mytimeout !== undefined && mytimeout != null) {
                                     clearTimeout(mytimeout);
                                     //console.log("cancelling timeout resize");
                                 }
-                                mytimeout = setTimeout(function () {
+                                mytimeout = setTimeout(function() {
                                     console.log("3d view force resize. 1 sec later");
                                     threed.resize();
                                 }, 1000);
 
                             });
-
-                            //disable the toolhead following by default
-                            // turn off looking at toolhead
-                            threed.isLookAtToolHeadMode = false;
-                            $('.com-chilipeppr-widget-3d-menu-lookattoolhead').removeClass("active btn-primary");
                         });
 
             });
