@@ -1,0 +1,647 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Workspace / GRBL - jsFiddle demo by jarret</title>
+
+<script type='text/javascript' src='/js/lib/dummy.js'></script>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/result-light.css">
+
+
+<script type='text/javascript' src="http://www.chilipeppr.com/js/require.js"></script>
+
+
+
+<link rel="stylesheet" type="text/css" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+
+
+<style type='text/css'>
+    .zipwhip-button {
+        line-height:0px;
+        padding: 1px 2px;
+    }
+    .zipwhip {
+        background: url('http://www.zipwhip.com/resources/images/favicon.ico') no-repeat top left;
+        display: inline-block;
+        margin: 1px 0;
+        height: 16px;
+        width: 16px;
+        /* line-height:0px; */
+        background-size: 16px 16px;
+        /* -webkit-background-size: 50% 50%; Safari
+        -khtml-background-size: 50% 50%; Konqueror
+        -moz-background-size: 50% 50%; Firefox */
+    }
+    #com-chilipeppr-ws-gcode-wrapper .dropdown-menu {
+        /* z-index:6; */
+        /* position:inherit; */
+    }
+    #com-chilipeppr-ws-gcode-wrapper .panel-heading {
+        /* padding: 10px 12px; */
+    }
+    #com-chilipeppr-ws-gcode-wrapper .well.com-chilipeppr-ws-hdr {
+        /* padding: 10px 15px; */
+    }
+    #com-chilipeppr-ws-gcode-dragdrop {
+        margin-right:6px;
+    }
+    #com-chilipeppr-ws-gcode-hdr {
+        margin-bottom:10px;
+    }
+    .panel {
+        margin-bottom:10px;
+    }
+    #com-chilipeppr-ws-gcode-wrapper #com-chilipeppr-widget-gcode-body {
+        /* max-height:250px; */
+        height:250px;
+    }
+    #com-chilipeppr-ws-gcode-wrapper .com-chilipeppr-widget-spconsole {
+        margin-bottom:0;
+    }
+    #com-chilipeppr-ws-gcode-dragdropoverlay {
+        position: absolute;
+        top:0;
+        bottom:0;
+        left:0;
+        right:0;
+        z-index:10;
+        background-color: rgba(255, 255, 255, 0.5);
+        font-size: 20px;
+        padding:100px;
+        border: 3px dashed #3276b1;
+        text-align:center;
+        pointer-events: none;
+    }
+    #com-chilipeppr-ws-gcode-dragdropoverlay .well {
+        background-color: rgba(127, 127, 127, 0.5);
+    }
+    #com-chilipeppr-ws-gcode-wrapper.hover {
+        /* background-color: blue; */
+    }
+    .com-chilipeppr-elem-dragdrop {
+        /* border: 1px dashed gray; */
+        /* border-radius: 4px; */
+        padding:0;
+        margin-right:6px;
+    }
+    .padrt {
+        padding-right:10px;
+    }
+    .zhigh {
+        /* z-index:5; */
+        position:relative;
+    }
+    #com-chilipeppr-ws-gcode-wrapper .dropdown-menu {
+        /* z-index:20; */
+    }
+    #mainnav {
+        z-index:5;
+    }
+    .nopadding {
+        padding:0;
+    }
+    #com-chilipeppr-widget-3dviewer .panel-heading, #com-chilipeppr-3dviewer-controlpanel .panel-heading {
+        background:none;
+        /* border:none; */
+        padding:10px 15px;
+        margin-bottom:0;
+    }
+    #com-chilipeppr-3dviewer-controlpanel {
+        padding:0 10px;
+        float:left;
+    }
+    #com-chilipeppr-gcode-list {
+        /* padding-right: 10px; */
+        /* z-index:5; */
+        /* position: relative; */
+    }
+    #com-chilipeppr-serialport-ws-hdr {
+        /* z-index:5; */
+    }
+    .well.com-chilipeppr-ws-hdr {
+        padding:10px 15px;
+        /* padding:8px; */
+        /* padding-left:15px; */
+        /* margin:0; */
+        /* margin-bottom:10px; */
+    }
+    #chilipeppr-3dviewer {
+        /* z-index: -1; */
+        padding-right:10px;
+    }
+    #com-chilipeppr-widget-3dviewer-renderArea {
+        /* z-index:0; */
+    }
+    .row .widget {
+        margin:0;
+        padding:0;
+    }
+    .dropArea.hover {
+        background: #dddddd;
+    }
+    #pnlWorkspace.hover {
+        background: red;
+    }
+    body.hover {
+        background: #5bc0de;
+    }
+    #chilipeppr-serialport-wrapper .com-chilipeppr-widget-serialport-spselector {
+        max-height: none;
+    }
+    #chilipeppr-serialport-log {
+        /*height:200px;*/
+        /* padding-right:10px; */
+        /* z-index:5; */
+        /* position: relative; */
+    }
+    .nomargin {
+        margin:0;
+    }
+    .noheight {
+        height:0;
+    }
+</style>
+
+
+
+<script type='text/javascript'>//<![CDATA[
+
+// Jarret's Grbl Workspace
+// Fork from http://chilipeppr.com/tinyg
+
+//suppress all logging on this workspace due to large numbers of console.log writes bogging down browser.
+//a mirrored version of this workspace with logging enabled is at chilipeppr.com/jarret
+console.log("GRBL: Suppressing all further console logging");
+console.log = function(){};
+
+cprequire(["chilipeppr_ready"], function () {
+
+    // Define standard ChiliPeppr objects
+    var ws = {
+        id: "com-chilipeppr-ws-grbl",
+        url: 'http://jsfiddle.net/jarret/W7QJH/show/light',
+        fiddleurl: 'http://jsfiddle.net/jarret/W7QJH/',
+        name: "GRBL Workspace",
+        desc: "This is a workspace for ChiliPeppr's Hardware Fiddle. It is geared towards CNC machines using GRBL.",
+        foreignSubscribe: {
+            "/com-chilipeppr-elem-dragdrop/ondragover" : "The Chilipeppr drag drop element will publish on channel /com-chilipeppr-elem-dragdrop/ondropped when a file is dropped so we subscribe to it so we can load a Gcode file when the user drags it onto the browser. It also adds a hover class to the bound DOM elem so we can add a CSS to hilite on hover",
+            "/com-chilipeppr-elem-dragdrop/ondragleave" : "We need to know when the drag is over to remove the CSS hilites.",
+            "/com-chilipeppr-widget-gcode/resize" : "We watch if the Gcode viewer resizes so that we can reposition or resize other elements in the workspace. Specifically we ask the Serial Port Console to resize. We also redraw the 3D Viewer so it fills the whole screen."
+        },
+        foreignPublish: {
+        }
+    };
+
+    // Load top bar elements
+
+    // Zipwhip texting
+    // com-chilipeppr-ws-zipwhip
+    chilipeppr.load(
+            "#com-chilipeppr-ws-zipwhip",
+            "http://fiddle.jshell.net/chilipeppr/56X9G/show/light/", function () {
+                require(["inline:com-chilipeppr-elem-zipwhip"], function (zipwhip) {
+                    zipwhip.init();
+                    // setup toggle button
+                    var zwBtn = $('#com-chilipeppr-ws-gcode-menu .zipwhip-button');
+                    var zwDiv = $('#com-chilipeppr-ws-zipwhip');
+                    zwBtn.click(function() {
+                        if (zwDiv.hasClass("hidden")) {
+                            // unhide
+                            zwDiv.removeClass("hidden");
+                            zwBtn.addClass("active");
+                        } else {
+                            zwDiv.addClass("hidden");
+                            zwBtn.removeClass("active");
+                        }
+                        $(window).trigger('resize');
+                    });
+                });
+            });
+
+    // Auto-Leveller
+    // com-chilipeppr-ws-autolevel
+    // hiding auto leveller as unsure what features supported in grbl. will come back to this.
+    // http:jsfiddle.net/jarret/uvVL6/
+
+    chilipeppr.load(
+            "#com-chilipeppr-ws-autolevel",
+            "http://fiddle.jshell.net/jarret/uvVL6/show/light/", function () {
+                require(["inline:com-chilipeppr-widget-autolevel"], function (autolevel) {
+                    autolevel.init();
+                    // setup toggle button
+                    var alBtn = $('#com-chilipeppr-ws-gcode-menu .autolevel-button');
+                    var alDiv = $('#com-chilipeppr-ws-autolevel');
+                    alBtn.click(function() {
+                        if (alDiv.hasClass("hidden")) {
+                            // unhide
+                            alDiv.removeClass("hidden");
+                            alBtn.addClass("active");
+                            autolevel.onDisplay();
+                        } else {
+                            alDiv.addClass("hidden");
+                            alBtn.removeClass("active");
+                            autolevel.onUndisplay();
+                        }
+                        $(window).trigger('resize');
+
+                    });
+                });
+            });
+
+
+
+    // Macro
+    // com-chilipeppr-ws-autolevel
+    chilipeppr.load(
+            "#com-chilipeppr-ws-macro",
+            "http://fiddle.jshell.net/chilipeppr/ZJ5vV/show/light/", function () {
+                require(["inline:com-chilipeppr-widget-macro"], function (macro) {
+                    macro.init();
+                    // setup toggle button
+                    var alBtn = $('#com-chilipeppr-ws-gcode-menu .macro-button');
+                    var alDiv = $('#com-chilipeppr-ws-macro');
+                    alBtn.click(function() {
+                        if (alDiv.hasClass("hidden")) {
+                            // unhide
+                            alDiv.removeClass("hidden");
+                            alBtn.addClass("active");
+                            //autolevel.onDisplay();
+                        } else {
+                            alDiv.addClass("hidden");
+                            alBtn.removeClass("active");
+                            //autolevel.onUndisplay();
+                        }
+                        $(window).trigger('resize');
+
+                    });
+                });
+            });
+
+    // JScut
+    // com-chilipeppr-ws-jscut
+    chilipeppr.load(
+            "#com-chilipeppr-ws-jscut",
+            "http://fiddle.jshell.net/chilipeppr/7ZzSV/show/light/", function () {
+                require(["inline:org-jscut-gcode-widget"], function (jscut) {
+                    jscut.init();
+                    // setup toggle button
+                    var alBtn = $('#com-chilipeppr-ws-gcode-menu .jscut-button');
+                    var alDiv = $('#com-chilipeppr-ws-jscut');
+                    alBtn.click(function() {
+                        if (alDiv.hasClass("hidden")) {
+                            // unhide
+                            alDiv.removeClass("hidden");
+                            alBtn.addClass("active");
+                        } else {
+                            alDiv.addClass("hidden");
+                            alBtn.removeClass("active");
+                        }
+                        $(window).trigger('resize');
+
+                    });
+                });
+            });
+
+    // Element / Drag Drop
+    // Load the dragdrop element into workspace toolbar
+    // http://jsfiddle.net/chilipeppr/Z9F6G/
+    chilipeppr.load("#com-chilipeppr-ws-gcode-dragdrop",
+            "http://fiddle.jshell.net/chilipeppr/Z9F6G/show/light/", function () {
+                require(["inline:com-chilipeppr-elem-dragdrop"], function (dd) {
+                    console.log("inside require of dragdrop");
+                    $('.com-chilipeppr-elem-dragdrop').removeClass('well');
+                    dd.init();
+                    // The Chilipeppr drag drop element will publish
+                    // on channel /com-chilipeppr-elem-dragdrop/ondropped
+                    // when a file is dropped so subscribe to it
+                    // It also adds a hover class to the bound DOM elem
+                    // so you can add CSS to hilite on hover
+                    dd.bind("#com-chilipeppr-ws-gcode-wrapper", null);
+                    //$(".com-chilipeppr-elem-dragdrop").popover('show');
+                    //dd.bind("#pnlWorkspace", null);
+                    var ddoverlay = $('#com-chilipeppr-ws-gcode-dragdropoverlay');
+                    chilipeppr.subscribe("/com-chilipeppr-elem-dragdrop/ondragover", function () {
+                        //console.log("got dragdrop hover");
+                        ddoverlay.removeClass("hidden");
+                    });
+                    chilipeppr.subscribe("/com-chilipeppr-elem-dragdrop/ondragleave", function () {
+                        ddoverlay.addClass("hidden");
+                        //console.log("got dragdrop leave");
+                    });
+                    console.log(dd);
+                });
+            });
+
+    // Workspace Menu with Workspace Billboard
+    // http://jsfiddle.net/jlauer/yC8Hv/
+    chilipeppr.load(
+            "#com-chilipeppr-ws-gcode-menu-billboard",
+            "http://fiddle.jshell.net/chilipeppr/6z76Z/show/light/");
+
+    //Unsure what the purpose of this is; loading the wrong widgets.
+    // MODIFY
+    // This is a fiddle that looks at the Grbl workspace being instantiated
+    // here and attaches 3 menu items. 1) the pubsub viewer dialog so users
+    // can see what pubsubs this workspace may publish or subscribe to 2) It
+    // lets them fork the workspace for their own use
+    chilipeppr.load(
+            "http://fiddle.jshell.net/chilipeppr/zMbL9/show/light/",
+            function () {
+                require(['inline:com-chilipeppr-elem-pubsubviewer'], function (pubsubviewer) {
+                    // you are asking the pubsubviewer to show its menu
+                    // inside the dom element in the 1st param, in the 2nd
+                    // param you are giving it which object to analyze to gather
+                    // its data, the 3rd param is just a name
+                    pubsubviewer.attachTo(
+                            $('#com-chilipeppr-ws-gcode-menu .dropdown-menu-ws'),
+                            ws,
+                            "Workspace"
+                    );
+                });
+            });
+
+
+    // 3D Viewer
+    // http://jsfiddle.net/chilipeppr/y3HRF
+    chilipeppr.load("#com-chilipeppr-3dviewer",
+            "http://fiddle.jshell.net/chilipeppr/y3HRF/show/light/",
+
+            function () {
+                console.log("got callback done loading 3d");
+
+                cprequire(
+                        ['inline:com-chilipeppr-widget-3dviewer'],
+
+                        function (threed) {
+                            console.log("Running 3dviewer");
+                            threed.init();
+                            console.log("3d viewer initted");
+
+                            // Ok, do someting whacky. Try to move the 3D Viewer
+                            // Control Panel to the center column
+                            setTimeout(function() {
+                                var element = $('#com-chilipeppr-3dviewer .panel-heading').detach();
+                                $('#com-chilipeppr-3dviewer').addClass("noheight");
+                                $('#com-chilipeppr-widget-3dviewer').addClass("nomargin");
+                                $('#com-chilipeppr-3dviewer-controlpanel').append(element);
+                            }, 10);
+
+                            // listen to resize events so we can resize our 3d viewer
+                            // this was done to solve the scrollbar residue we were seeing
+                            // resize this console on a browser resize
+                            var mytimeout = null;
+                            $(window).on('resize', function (evt) {
+                                //console.log("3d view force resize");
+                                if (mytimeout !== undefined && mytimeout !== null) {
+                                    clearTimeout(mytimeout);
+                                    //console.log("cancelling timeout resize");
+                                }
+                                mytimeout = setTimeout(function() {
+                                    console.log("3d view force resize. 1 sec later");
+                                    threed.resize();
+                                }, 1000);
+
+                            });
+
+                            //disable the toolhead following by default
+                            // turn off looking at toolhead
+                            threed.isLookAtToolHeadMode = false;
+                            $('.com-chilipeppr-widget-3d-menu-lookattoolhead').removeClass("active btn-primary");
+                        });
+
+            });
+
+    // Gcode List
+    // http://jsfiddle.net/chilipeppr/F2Qn3/
+    chilipeppr.load("#com-chilipeppr-gcode-list",
+            "http://fiddle.jshell.net/chilipeppr/F2Qn3/show/light/",
+
+            function () {
+                cprequire(
+                        ["inline:com-chilipeppr-widget-gcode"],
+
+                        function (gcodelist) {
+                            gcodelist.init();
+                        });
+            });
+
+    //Axes Widget XYZA
+    chilipeppr.load(
+            "com-chilipeppr-xyz",
+            "http://fiddle.jshell.net/chilipeppr/gh45j/show/light/",
+
+            function () {
+                cprequire(
+                        ["inline:com-chilipeppr-widget-xyz"],
+
+                        function (xyz) {
+                            xyz.init();
+                        });
+            });
+
+
+
+    // Serial Port Log Window
+    // http://jsfiddle.net/chilipeppr/rczajbx0/
+    chilipeppr.load("#com-chilipeppr-serialport-log",
+            "http://fiddle.jshell.net/chilipeppr/rczajbx0/show/light/",
+
+            function () {
+                cprequire(
+                        ["inline:com-chilipeppr-widget-spconsole"],
+
+                        function (spc) {
+
+                            //stop spconsole from showing status requests responses from jsps
+                            var oldOnRecvLine = spc.onRecvLine.bind(spc);
+                            var newOnRecvLine = function(data) {
+                                //ignore incoming status update to keep console clear otherwise continue with original function
+                                console.log("GRBL: AltOnRecvLine: " + data.dataline);
+                                if(data.dataline.search(/^<|^\n|^$/) < 0 || $('#com-chilipeppr-widget-grbl .grbl-verbose').hasClass("enabled")){
+                                    data.dataline = data.dataline.replace("<","&lt;").replace(">","&gt;");
+                                    oldOnRecvLine(data);
+                                }
+                            };
+                            var oldOnEchoOfSend = spc.onEchoOfSend.bind(spc);
+                            var newOnEchoOfSend = function(data) {
+                                //ignore outgoing status requests to keep the console clear, otherwise continue with original function
+                                console.log("GRBL: AltOnEchoOfSend: " + data);
+                                if(data.search(/^\?|^$/) < 0)
+                                    oldOnEchoOfSend(data);
+                            };
+
+                            spc.onRecvLine = newOnRecvLine;
+                            spc.onEchoOfSend = newOnEchoOfSend;
+
+                            spc.init(true);
+
+                            // resize this console on a browser resize
+                            $(window).on('resize', function (evt) {
+                                //console.log("serial-port-console. resize evt:", evt);
+                                if ($.isWindow(evt.target)) {
+                                    //console.log("resize was window. so resizing");
+                                    spc.resize();
+                                } else {
+                                    //console.log("resize was not window, so ignoring");
+                                }
+                            });
+                            // resize this console if we get a publish
+                            // from the gcode viewer widget
+                            chilipeppr.subscribe("/com-chilipeppr-widget-gcode/resize", spc, spc.resize);
+                        });
+            });
+
+
+
+    // GRBL
+    // http://jsfiddle.net/jarret/T6Bz5/
+    // com-chilipeppr-grbl
+    chilipeppr.load(
+            "com-chilipeppr-grbl",
+            "http://fiddle.jshell.net/jarret/T6Bz5/show/light/",
+
+            function () {
+                cprequire(
+                        ["inline:com-chilipeppr-widget-grbl"], //"inline:com-chilipeppr-widget-spconsole"],
+                        //, "inline:com-chilipeppr-serialport-spselector"],
+
+                        function (grbl) { //,spconsole) {
+
+                            grbl.init();
+
+                        });
+            });
+
+
+    // WebRTC Client com-chilipeppr-webrtcclient
+    chilipeppr.load(
+            "com-chilipeppr-webrtcclient",
+            "http://fiddle.jshell.net/chilipeppr/qWj4f/show/light/",
+
+            function () {
+                cprequire(
+                        ["inline:com-chilipeppr-widget-webrtc-client"],
+
+                        function (webrtcclient) {
+                            webrtcclient.init();
+                        });
+            });
+
+    // Serial Port Selector
+    // http://jsfiddle.net/chilipeppr/vetj5fvx/
+    chilipeppr.load("com-chilipeppr-serialport-spselector",
+            "http://fiddle.jshell.net/chilipeppr/vetj5fvx/show/light/",
+
+            function () {
+                cprequire(
+                        ["inline:com-chilipeppr-widget-serialport"],
+
+                        function (sp) {
+                            sp.setSingleSelectMode();
+                            //sp.init("192.168.1.7");
+                            sp.init(null, "grbl");
+                            //$('.com-chilipeppr-widget-serialport-console').removeClass("hidden");
+                            //$('.com-chilipeppr-widget-serialport-consoleinput').removeClass("hidden");
+                            //$('.com-chilipeppr-widget-serialport-status').removeClass("hidden");
+                        });
+            });
+
+
+});
+//]]>
+
+</script>
+
+
+</head>
+<body>
+<!-- This is the workspace layout for the Gcode Workspace -->
+<div id="com-chilipeppr-ws-gcode-wrapper" class="dropArea">
+    <div id="com-chilipeppr-ws-gcode-dragdropoverlay" class="hidden">
+        <div class="well">Drag and Drop Gcode Files Onto Browser Window</div>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-3 widgetx padrt">
+                <!-- 3D Viewer. Must be loaded at top to get z-orders correct -->
+                <div id="com-chilipeppr-3dviewer">Load 3D Viewport Here</div>
+                <!-- Workspace Hdr -->
+                <div id="com-chilipeppr-ws-gcode-hdr" class="com-chilipeppr-ws-hdr zhigh well">GRBL Workspace
+                    <div id="com-chilipeppr-ws-gcode-menu" class="">
+                        <div class="pull-right">
+                            <div class="dropdown xpull-right">
+                                <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+                                <ul class="dropdown-menu dropdown-menu-ws" role="menu">
+                                    <li id="com-chilipeppr-ws-gcode-menu-billboard" style="width:350px;"></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div id="com-chilipeppr-ws-gcode-dragdrop"  style="margin-right:6px;" class=""></div>
+                        <!-- <div class="btn-group"> -->
+                        <button type="button" class="btn btn-xs btn-default zipwhip-button" data-container="body" data-toggle="popover" data-placement="auto" data-content="Get a text sent to you when your CNC job is completed." data-trigger="hover" data-delay="100"><span class="zipwhip"></span></button>
+                        <!-- </div>
+                        <div class="btn-group"> -->
+
+                        <button type="button" class="btn btn-xs btn-default autolevel-button" data-container="body" data-toggle="popover" data-placement="auto" data-content="Allows you to auto-level your PCB before milling. Most raw PCB boards have a slight warpage. This widget lets you probe the warpage and then it auto-scales your Gcode to match the warpage so you get very clean/predictable z-positions in your milling job." data-trigger="hover" data-delay="100">Auto-Level</button>
+
+                        <!-- </div>
+                        <div class="btn-group"> -->
+                        <button type="button" class="btn btn-xs btn-default macro-button" data-container="body" data-toggle="popover" data-placement="auto" data-content="Run a macro." data-trigger="hover" data-delay="100">Macro</button>
+                        <!-- </div>
+                        <div class="btn-group"> -->
+                        <button type="button" class="btn btn-xs btn-default jscut-button" data-container="body" data-toggle="popover" data-placement="auto" data-content="Load file from JSCut" data-trigger="hover" data-delay="100">JScut</button>
+                        <!-- </div>
+                        <div class="btn-group"> -->
+                        <!-- </div> -->
+                    </div>
+
+                </div>
+                <!-- Zipwhip Text Messaging -->
+                <div class="zhigh hidden" id="com-chilipeppr-ws-zipwhip"></div>
+
+                <!-- Auto Leveller -->
+                <div class="zhigh hidden" id="com-chilipeppr-ws-autolevel">Auto-Level Here</div>
+
+
+                <!-- Macro -->
+                <div class="zhigh hidden" id="com-chilipeppr-ws-macro">Macro Here</div>
+
+                <!-- JScut -->
+                <div class="zhigh hidden" id="com-chilipeppr-ws-jscut">Jscut Here</div>
+
+                <!-- Gcode List -->
+                <div id="com-chilipeppr-gcode-list" class="zhigh">Load Gcode List Here</div>
+                <!-- Serial In/Out Text Log-->
+                <div id="com-chilipeppr-serialport-log" class="zhigh">Load Serial Port Log Here</div>
+            </div>
+            <!-- 3D Viewer -->
+            <div class="widget col-xs-6">
+                <div class="">
+                    <div id="com-chilipeppr-3dviewer-controlpanel" style=""></div>
+                </div>
+            </div>
+            <div class="col-xs-3 nopadding">
+                <!-- XYZ -->
+                <div id="com-chilipeppr-xyz" class="">Load XYZ Here</div>
+                <!-- Tinyg -->
+                <div id="com-chilipeppr-grbl" class="">Load GRBL Here</div>
+                <!-- WebRTC Client -->
+                <div id="com-chilipeppr-webrtcclient" class="">Load WebRTC Client Here</div>
+                <!-- Serial Port Selector -->
+                <div id="com-chilipeppr-serialport-spselector" class="">Load Serial Port Selector Here</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+
+
+</html>
+
