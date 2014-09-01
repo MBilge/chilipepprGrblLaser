@@ -95,11 +95,13 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         },
         updateLaserStatusIndication: function (isOn) {
             if (isOn) {
-                $('#com-chilipeppr-widget-grblaser').removeClass("panel-default").addClass("panel-danger");
+                $('#com-chilipeppr-widget-grblaser').removeClass("panel-default");
+                $('#com-chilipeppr-widget-grblaser').addClass("panel-danger");
                 $('#grblaser-current-state').find('.com-chilipeppr-grblaser-state-off').hide();
                 $('#grblaser-current-state').find('.com-chilipeppr-grblaser-state-on').show();
             } else {
-                $('#com-chilipeppr-widget-grblaser').removeClass("panel-danger").addClass("panel-default");
+                $('#com-chilipeppr-widget-grblaser').removeClass("panel-danger");
+                $('#com-chilipeppr-widget-grblaser').addClass("panel-default");
                 $('#grblaser-current-state').find('.com-chilipeppr-grblaser-state-on').hide();
                 $('#grblaser-current-state').find('.com-chilipeppr-grblaser-state-off').show();
             }
@@ -196,8 +198,8 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         },
         showBody: function(evt) {
             $('#com-chilipeppr-widget-grblaser .panel-body .stat-row').removeClass('hidden');
-            $('#com-chilipeppr-widget-grblaser .hidebody span').addClass('glyphicon-chevron-up')
-                    .removeClass('glyphicon-chevron-down');
+            $('#com-chilipeppr-widget-grblaser .hidebody span').addClass('glyphicon-chevron-up');
+            $('#com-chilipeppr-widget-grblaser .hidebody span').removeClass('glyphicon-chevron-down');
             if ((evt !== null)) {
                 this.options.showBody = true;
                 this.saveOptionsCookie();
@@ -205,8 +207,8 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         },
         hideBody: function(evt) {
             $('#com-chilipeppr-widget-grblaser .panel-body .stat-row').addClass('hidden');
-            $('#com-chilipeppr-widget-grblaser .hidebody span').removeClass('glyphicon-chevron-up')
-                    .addClass('glyphicon-chevron-down');
+            $('#com-chilipeppr-widget-grblaser .hidebody span').removeClass('glyphicon-chevron-up');
+            $('#com-chilipeppr-widget-grblaser .hidebody span').addClass('glyphicon-chevron-down');
             if ((evt !== null)) {
                 this.options.showBody = false;
                 this.saveOptionsCookie();
