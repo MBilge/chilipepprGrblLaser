@@ -517,6 +517,18 @@ cprequire(["chilipeppr_ready"], function () {
                         });
             });
 
+    chilipeppr.load(
+            "com-chilipeppr-grblaser",
+            "https://raw.githubusercontent.com/dattanchu/chilipepprGrblLaser/master/widgets/grblaserControl.html",
+            function () {
+                cprequire(
+                        ["inline:com-chilipeppr-widget-grblaser"],
+                        function (grblaser) {
+                            grblaser.init();
+                        });
+            });
+
+
 
     // WebRTC Client com-chilipeppr-webrtcclient
     chilipeppr.load(
