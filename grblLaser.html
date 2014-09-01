@@ -11,10 +11,9 @@
 
 <style type='text/css'>
     .zipwhip-button {
-        line-height: 0px;
+        line-height:0px;
         padding: 1px 2px;
     }
-
     .zipwhip {
         background: url('http://www.zipwhip.com/resources/images/favicon.ico') no-repeat top left;
         display: inline-block;
@@ -27,165 +26,133 @@
         -khtml-background-size: 50% 50%; Konqueror
         -moz-background-size: 50% 50%; Firefox */
     }
-
     #com-chilipeppr-ws-gcode-wrapper .dropdown-menu {
         /* z-index:6; */
         /* position:inherit; */
     }
-
     #com-chilipeppr-ws-gcode-wrapper .panel-heading {
         /* padding: 10px 12px; */
     }
-
     #com-chilipeppr-ws-gcode-wrapper .well.com-chilipeppr-ws-hdr {
         /* padding: 10px 15px; */
     }
-
     #com-chilipeppr-ws-gcode-dragdrop {
-        margin-right: 6px;
+        margin-right:6px;
     }
-
     #com-chilipeppr-ws-gcode-hdr {
-        margin-bottom: 10px;
+        margin-bottom:10px;
     }
-
     .panel {
-        margin-bottom: 10px;
+        margin-bottom:10px;
     }
-
     #com-chilipeppr-ws-gcode-wrapper #com-chilipeppr-widget-gcode-body {
         /* max-height:250px; */
-        height: 250px;
+        height:250px;
     }
-
     #com-chilipeppr-ws-gcode-wrapper .com-chilipeppr-widget-spconsole {
-        margin-bottom: 0;
+        margin-bottom:0;
     }
-
     #com-chilipeppr-ws-gcode-dragdropoverlay {
         position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 10;
+        top:0;
+        bottom:0;
+        left:0;
+        right:0;
+        z-index:10;
         background-color: rgba(255, 255, 255, 0.5);
         font-size: 20px;
-        padding: 100px;
+        padding:100px;
         border: 3px dashed #3276b1;
-        text-align: center;
+        text-align:center;
         pointer-events: none;
     }
-
     #com-chilipeppr-ws-gcode-dragdropoverlay .well {
         background-color: rgba(127, 127, 127, 0.5);
     }
-
     #com-chilipeppr-ws-gcode-wrapper.hover {
         /* background-color: blue; */
     }
-
     .com-chilipeppr-elem-dragdrop {
         /* border: 1px dashed gray; */
         /* border-radius: 4px; */
-        padding: 0;
-        margin-right: 6px;
+        padding:0;
+        margin-right:6px;
     }
-
     .padrt {
-        padding-right: 10px;
+        padding-right:10px;
     }
-
     .zhigh {
         /* z-index:5; */
-        position: relative;
+        position:relative;
     }
-
     #com-chilipeppr-ws-gcode-wrapper .dropdown-menu {
         /* z-index:20; */
     }
-
     #mainnav {
-        z-index: 5;
+        z-index:5;
     }
-
     .nopadding {
-        padding: 0;
+        padding:0;
     }
-
     #com-chilipeppr-widget-3dviewer .panel-heading, #com-chilipeppr-3dviewer-controlpanel .panel-heading {
-        background: none;
+        background:none;
         /* border:none; */
-        padding: 10px 15px;
-        margin-bottom: 0;
+        padding:10px 15px;
+        margin-bottom:0;
     }
-
     #com-chilipeppr-3dviewer-controlpanel {
-        padding: 0 10px;
-        float: left;
+        padding:0 10px;
+        float:left;
     }
-
     #com-chilipeppr-gcode-list {
         /* padding-right: 10px; */
         /* z-index:5; */
         /* position: relative; */
     }
-
     #com-chilipeppr-serialport-ws-hdr {
         /* z-index:5; */
     }
-
     .well.com-chilipeppr-ws-hdr {
-        padding: 10px 15px;
+        padding:10px 15px;
         /* padding:8px; */
         /* padding-left:15px; */
         /* margin:0; */
         /* margin-bottom:10px; */
     }
-
     #chilipeppr-3dviewer {
         /* z-index: -1; */
-        padding-right: 10px;
+        padding-right:10px;
     }
-
     #com-chilipeppr-widget-3dviewer-renderArea {
         /* z-index:0; */
     }
-
     .row .widget {
-        margin: 0;
-        padding: 0;
+        margin:0;
+        padding:0;
     }
-
     .dropArea.hover {
         background: #dddddd;
     }
-
     #pnlWorkspace.hover {
         background: red;
     }
-
     body.hover {
         background: #5bc0de;
     }
-
     #chilipeppr-serialport-wrapper .com-chilipeppr-widget-serialport-spselector {
         max-height: none;
     }
-
     #chilipeppr-serialport-log {
         /*height:200px;*/
         /* padding-right:10px; */
         /* z-index:5; */
         /* position: relative; */
     }
-
     .nomargin {
-        margin: 0;
+        margin:0;
     }
-
     .noheight {
-        height: 0;
+        height:0;
     }
 </style>
 
@@ -584,41 +551,29 @@ cprequire(["chilipeppr_ready"], function () {
                 <!-- Workspace Hdr -->
                 <div id="com-chilipeppr-ws-gcode-hdr" class="com-chilipeppr-ws-hdr zhigh well">GRBL Workspace
                     <div id="com-chilipeppr-ws-gcode-menu" class="">
-                        <div class="dropdown pull-right">
-                            <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
-                                <span class="caret"></span></button>
-                            <ul class="dropdown-menu dropdown-menu-ws" role="menu">
-                                <li id="com-chilipeppr-ws-gcode-menu-billboard" style="width:350px;"></li>
-                            </ul>
+                        <div class="pull-right">
+                            <div class="dropdown xpull-right">
+                                <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+                                <ul class="dropdown-menu dropdown-menu-ws" role="menu">
+                                    <li id="com-chilipeppr-ws-gcode-menu-billboard" style="width:350px;"></li>
+                                </ul>
+                            </div>
                         </div>
 
-                        <div id="com-chilipeppr-ws-gcode-dragdrop" style="margin-right:6px;" class=""></div>
+                        <div id="com-chilipeppr-ws-gcode-dragdrop"  style="margin-right:6px;" class=""></div>
                         <!-- <div class="btn-group"> -->
-                        <button type="button" class="btn btn-xs btn-default zipwhip-button" data-container="body"
-                                data-toggle="popover" data-placement="auto"
-                                data-content="Get a text sent to you when your CNC job is completed."
-                                data-trigger="hover" data-delay="100"><span class="zipwhip"></span></button>
+                        <button type="button" class="btn btn-xs btn-default zipwhip-button" data-container="body" data-toggle="popover" data-placement="auto" data-content="Get a text sent to you when your CNC job is completed." data-trigger="hover" data-delay="100"><span class="zipwhip"></span></button>
                         <!-- </div>
                         <div class="btn-group"> -->
 
-                        <button type="button" class="btn btn-xs btn-default autolevel-button" data-container="body"
-                                data-toggle="popover" data-placement="auto"
-                                data-content="Allows you to auto-level your PCB before milling. Most raw PCB boards have a slight warpage. This widget lets you probe the warpage and then it auto-scales your Gcode to match the warpage so you get very clean/predictable z-positions in your milling job."
-                                data-trigger="hover" data-delay="100">Auto-Level
-                        </button>
+                        <button type="button" class="btn btn-xs btn-default autolevel-button" data-container="body" data-toggle="popover" data-placement="auto" data-content="Allows you to auto-level your PCB before milling. Most raw PCB boards have a slight warpage. This widget lets you probe the warpage and then it auto-scales your Gcode to match the warpage so you get very clean/predictable z-positions in your milling job." data-trigger="hover" data-delay="100">Auto-Level</button>
 
                         <!-- </div>
                         <div class="btn-group"> -->
-                        <button type="button" class="btn btn-xs btn-default macro-button" data-container="body"
-                                data-toggle="popover" data-placement="auto" data-content="Run a macro."
-                                data-trigger="hover" data-delay="100">Macro
-                        </button>
+                        <button type="button" class="btn btn-xs btn-default macro-button" data-container="body" data-toggle="popover" data-placement="auto" data-content="Run a macro." data-trigger="hover" data-delay="100">Macro</button>
                         <!-- </div>
                         <div class="btn-group"> -->
-                        <button type="button" class="btn btn-xs btn-default jscut-button" data-container="body"
-                                data-toggle="popover" data-placement="auto" data-content="Load file from JSCut"
-                                data-trigger="hover" data-delay="100">JScut
-                        </button>
+                        <button type="button" class="btn btn-xs btn-default jscut-button" data-container="body" data-toggle="popover" data-placement="auto" data-content="Load file from JSCut" data-trigger="hover" data-delay="100">JScut</button>
                         <!-- </div>
                         <div class="btn-group"> -->
                         <!-- </div> -->
@@ -652,9 +607,7 @@ cprequire(["chilipeppr_ready"], function () {
             <div class="col-xs-3 nopadding">
                 <!-- XYZ -->
                 <div id="com-chilipeppr-xyz" class="">Load XYZ Here</div>
-                <!-- GRBLaser -->
-                <div id="com-chilipeppr-grblaser" class="">Load GRBLaser Here</div>
-                <!-- GRBL -->
+                <!-- Tinyg -->
                 <div id="com-chilipeppr-grbl" class="">Load GRBL Here</div>
                 <!-- WebRTC Client -->
                 <div id="com-chilipeppr-webrtcclient" class="">Load WebRTC Client Here</div>
