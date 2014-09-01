@@ -386,9 +386,11 @@ cprequire(["chilipeppr_ready"], function () {
                             // Control Panel to the center column
                             setTimeout(function() {
                                 var element = $('#com-chilipeppr-3dviewer .panel-heading').detach();
+                                console.log("Detached element=" + element);
                                 $('#com-chilipeppr-3dviewer').addClass("noheight");
                                 $('#com-chilipeppr-widget-3dviewer').addClass("nomargin");
                                 $('#com-chilipeppr-3dviewer-controlpanel').append(element);
+                                console.log("Finished moving 3d viewer element");
                             }, 100);
 
                             // listen to resize events so we can resize our 3d viewer
