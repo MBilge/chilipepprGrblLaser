@@ -141,7 +141,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
          */
         updateProgressIndicator: function (line) {
             if (line == this.STATUS_CODE.OK) {
-                currentGcodeLine++;
+                this.progress.currentGcodeLine++;
                 $("#laser-progress-bar").style.width = this.progress.percentage + "%";
                 $("#laser-progress-bar").innerHTML = this.progress.percentage + "%";
             }
@@ -152,7 +152,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         },
         handleGcodeLineBuffered: function (rawMsg) {
             this.checkLaserStatusChange(rawMsg);
-            this.updateGcodeProgressPercentage(rawMsg);
+            this.updateProgressIndicator(rawMsg);
         },
         init: function () {
             this.setupUiFromCookie();
