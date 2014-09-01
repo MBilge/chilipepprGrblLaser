@@ -184,10 +184,10 @@ cprequire(["chilipeppr_ready"], function () {
     // Define standard ChiliPeppr objects
     var ws = {
         id: "com-chilipeppr-ws-grbl",
-        url: 'http://jsfiddle.net/jarret/W7QJH/show/light',
-        fiddleurl: 'http://jsfiddle.net/jarret/W7QJH/',
-        name: "GRBL Workspace",
-        desc: "This is a workspace for ChiliPeppr's Hardware Fiddle. It is geared towards CNC machines using GRBL.",
+        url: 'https://raw.githubusercontent.com/dattanchu/chilipepprGrblLaser/master/grblLaser.html',
+        fiddleurl: 'https://github.com/dattanchu/chilipepprGrblLaser/blob/master/grblLaser.html',
+        name: "GRBLaser Workspace",
+        desc: "This is a workspace for ChiliPeppr's GRBLaser Fiddle. It is geared towards 2-axis laser machine using GRBL.",
         foreignSubscribe: {
             "/com-chilipeppr-elem-dragdrop/ondragover" : "The Chilipeppr drag drop element will publish on channel /com-chilipeppr-elem-dragdrop/ondropped when a file is dropped so we subscribe to it so we can load a Gcode file when the user drags it onto the browser. It also adds a hover class to the bound DOM elem so we can add a CSS to hilite on hover",
             "/com-chilipeppr-elem-dragdrop/ondragleave" : "We need to know when the drag is over to remove the CSS hilites.",
@@ -517,6 +517,16 @@ cprequire(["chilipeppr_ready"], function () {
                         });
             });
 
+    chilipeppr.load(
+            "com-chilipeppr-grblaser",
+            "https://raw.githubusercontent.com/dattanchu/chilipepprGrblLaser/master/widgets/grblaserControl.html",
+            function () {
+                cprequire(
+                        ["inline:com-chilipeppr-widget-grblaser"],
+                        function (grblaser) {
+                            grblaser.init();
+                        });
+            });
 
     // WebRTC Client com-chilipeppr-webrtcclient
     chilipeppr.load(
@@ -629,7 +639,9 @@ cprequire(["chilipeppr_ready"], function () {
             <div class="col-xs-3 nopadding">
                 <!-- XYZ -->
                 <div id="com-chilipeppr-xyz" class="">Load XYZ Here</div>
-                <!-- Tinyg -->
+                <!-- GRBLaser -->
+                <div id="com-chilipeppr-grblaser" class="">Load GRBLaser Here</div>
+                <!-- GRBL -->
                 <div id="com-chilipeppr-grbl" class="">Load GRBL Here</div>
                 <!-- WebRTC Client -->
                 <div id="com-chilipeppr-webrtcclient" class="">Load WebRTC Client Here</div>
