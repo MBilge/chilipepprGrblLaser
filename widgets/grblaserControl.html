@@ -140,9 +140,8 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         updateProgressIndicator: function (line) {
             if (line == this.STATUS_CODE.OK) {
                 this.progress.currentGcodeLine++;
-                var $laser_progress_bar = $("#laser-progress-bar");
-                $laser_progress_bar.style.width = this.progress.percentage + "%";
-                $laser_progress_bar.innerHTML = this.progress.percentage + "%";
+                $("#laser-progress-bar").style.width = this.progress.percentage + "%";
+                $("#laser-progress-bar").innerHTML = this.progress.percentage + "%";
             }
         },
         handleNewFile: function () {
