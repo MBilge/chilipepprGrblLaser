@@ -370,13 +370,10 @@ cprequire(["chilipeppr_ready"], function () {
     // http://jsfiddle.net/chilipeppr/y3HRF
     chilipeppr.load("#com-chilipeppr-3dviewer",
             "http://fiddle.jshell.net/chilipeppr/y3HRF/show/light/",
-
             function () {
                 console.log("got callback done loading 3d");
-
                 cprequire(
                         ['inline:com-chilipeppr-widget-3dviewer'],
-
                         function (threed) {
                             console.log("Running 3dviewer");
                             threed.init();
