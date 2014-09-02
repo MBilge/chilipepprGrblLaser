@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,15 +6,9 @@
 
 <script type='text/javascript' src='/js/lib/dummy.js'></script>
 
-
-
-
 <link rel="stylesheet" type="text/css" href="/css/result-light.css">
 
-
 <script type='text/javascript' src="http://www.chilipeppr.com/js/require.js"></script>
-
-
 
 <link rel="stylesheet" type="text/css" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
 
@@ -169,11 +162,9 @@
 
 
 
-<script type='text/javascript'>//<![CDATA[ 
+<script type='text/javascript'>//<![CDATA[
 
-// Jarret's Grbl Workspace
-// Fork from http://chilipeppr.com/tinyg
-
+// Fork from Jarret's Grbl Workspace http://chilipeppr.com/grbl
 //suppress all logging on this workspace due to large numbers of console.log writes bogging down browser.
 //a mirrored version of this workspace with logging enabled is at chilipeppr.com/jarret
 console.log("GRBL: Suppressing all further console logging");
@@ -350,7 +341,8 @@ cprequire(["chilipeppr_ready"], function () {
     // can see what pubsubs this workspace may publish or subscribe to 2) It
     // lets them fork the workspace for their own use
     chilipeppr.load(
-            "http://fiddle.jshell.net/chilipeppr/zMbL9/show/light/",
+            "https://raw.githubusercontent.com/dattanchu/chilipepprGrblLaser/master/references/pubsubWidget.html",
+//            "http://fiddle.jshell.net/chilipeppr/zMbL9/show/light/",
             function () {
                 require(['inline:com-chilipeppr-elem-pubsubviewer'], function (pubsubviewer) {
                     // you are asking the pubsubviewer to show its menu
