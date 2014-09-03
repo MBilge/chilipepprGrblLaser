@@ -250,6 +250,27 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
 //                chilipeppr.publish("/com-chilipeppr-widget-3dviewer/request3dObject", "");
 //            }
         },
+        setupQuickGcodeButton: function (buttonSelector, gcode, popoverContent) {
+            var that = this;
+            buttonSelector.click(function () {
+                that.sendCode(gcode);
+            });
+            var content = gcode;
+            var title = null;
+            if (popoverContent != null) {
+                content = popoverContent;
+                title = gcode;
+            }
+            buttonSelector.popover({
+                title : title,
+                content: content,
+                html: false,
+                delay: 200,
+                animation: true,
+                trigger: 'hover',
+                placement: 'auto'
+            });
+        },
         btnSetup: function() {
             // chevron hide body
             var that = this;
@@ -274,6 +295,15 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             $('#com-chilipeppr-widget-grblaser .laser-off-button').click(function() {
                 that.sendCode(that.CODE.TOOL_OFF);
             });
+
+            this.setupQuickGcodeButton($("#com-chilipeppr-widget-grblaser .zero-coordinate-system-1"),
+                    "G10 L20 P1 X0 Y0 Z0", "Set the current position to work piece 1 start position. Good for " +
+                            "starting your work from this position.");
+            this.setupQuickGcodeButton($("#com-chilipeppr-widget-grblaser .zero-coordinate-system-2"),
+                    "G10 L20 P2 X0 Y0 Z0");
+            this.setupQuickGcodeButton($("#com-chilipeppr-widget-grblaser .zero-coordinate-system-3"),
+                    "G10 L20 P3 X0 Y0 Z0");
+
 
             $('#com-chilipeppr-widget-grblaser .btn-toolbar .btn').popover({
                 delay: 500,
@@ -318,7 +348,6 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
                     pubsubviewer.attachTo($('#com-chilipeppr-widget-grblaser .panel-heading .dropdown-menu'), that);
                 });
             });
-
         }
     };
 });
@@ -371,11 +400,11 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
                 </div>
             </div>
             <div class="col-sm-4">
-                Zero Coordinate System
+                Zero
                 <div class="btn-group">
-                    <button class="btn btn-xs btn-default zero-coordinate-system-1">1</button>
-                    <button class="btn btn-xs btn-default zero-coordinate-system-2">2</button>
-                    <button class="btn btn-xs btn-default zero-coordinate-system-3">3</button>
+                    <button class="btn btn-xs btn-default zero-coordinate-system-1">Coordinate System 1</button>
+                    <button class="btn btn-xs btn-default zero-coordinate-system-2">Coordinate System 2</button>
+                    <button class="btn btn-xs btn-default zero-coordinate-system-3">Coordinate System 3</button>
                 </div>
             </div>
             <div class="col-sm-4">
