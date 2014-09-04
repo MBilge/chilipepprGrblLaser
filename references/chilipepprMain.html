@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>ChiliPeppr - Hardware Fiddle</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="js/require.js"></script>
+
+    <script type="text/javascript">
+
+
+
+        cprequire(["chilipeppr_ready"], function() {
+            console.log("seeing if chilipeppr is globally defined...");
+            console.log(chilipeppr);
+            chilipeppr.load("root", "http://fiddle.jshell.net/chilipeppr/2H9us/show/light/");
+        });
+
+    </script>
+</head>
+<body>
+
+<div id="root"></div>
+
+</body>
+</html>
