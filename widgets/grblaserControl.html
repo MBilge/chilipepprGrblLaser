@@ -109,8 +109,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         setBoundingBox: function(boundingBox) {
             this.goScale.boundingBox = boundingBox;
             this.goScale.ready = true;
-            console.log("Bounding box min=" + JSON.stringify(boundingBox.min) + " max=" +
-                    JSON.stringify(boundingBox.max));
+            console.log("Bounding box=" + JSON.stringify(boundingBox));
         },
         /** Not really working as intended since GRBL status != tool status
          */
