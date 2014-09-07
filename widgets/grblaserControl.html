@@ -131,7 +131,7 @@ cprequire_test(["inline:com-chilipeppr-widget-grblaser"], function (grbl) {
     sendCompleteId(1);
 
     setTimeout(function() {
-        console.log("Bounding box is ready= " + grbl.goScale.ready);
+        grbl.log("Bounding box is ready= " + grbl.goScale.ready);
     }, 1000)
 
 } /*end_test*/ );
@@ -139,6 +139,7 @@ cprequire_test(["inline:com-chilipeppr-widget-grblaser"], function (grbl) {
 cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jquerycookie"], function () {
     return {
         id: "com-chilipeppr-widget-grblaser",
+        shortid: "grblaser",
         url: "https://raw.githubusercontent.com/dattanchu/chilipepprGrblLaser/master/widgets/grblaserControl.html",
         fiddleurl: "https://github.com/dattanchu/chilipepprGrblLaser/blob/master/widgets/grblaserControl.html",
         name: "Widget / GRBLaser",
@@ -162,18 +163,23 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         STATUS_CODE : {
             OK : "ok"
         },
+        log: function(msg) {
+            if (this.options.debug) {
+                console.log(this.shortid+ ": " + msg);
+            }
+        },
         checkLaserStatusChange: function (rawMsg) {
             // rawMsg might have spaces and new lines
             var msg = rawMsg.replace(/(^\s+|\s+$|\r\n|\n|\r)/gm,"");
             if (msg === this.CODE.TOOL_ON){
                 if (!this.laserStatus.on) {
-                    console.log("GRBLaser: Laser Switched to ON");
+                    this.log("GRBLaser: Laser Switched to ON");
                     chilipeppr.publish("/com-chilipeppr-widget-grblaser/laserOnOffChange", true);
                 }
                 this.laserStatus.on = true;
             } else if (msg === this.CODE.TOOL_OFF) {
                 if (this.laserStatus.on) {
-                    console.log("GRBLaser: Laser Switched to OFF");
+                    this.log("GRBLaser: Laser Switched to OFF");
                     chilipeppr.publish("/com-chilipeppr-widget-grblaser/laserOnOffChange", false);
                 }
                 this.laserStatus.on = false;
@@ -200,7 +206,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
                         "," + boundingBox.max.y;
             }
 
-            console.log("Bounding box=" + JSON.stringify(boundingBox));
+            this.log("Bounding box=" + JSON.stringify(boundingBox));
         },
         /** Not really working as intended since GRBL status != tool status
          */
@@ -233,6 +239,10 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         /** @param payload e.g. {"Id":"123", "D":"G0 X1 "}
          */
         handleGcodeLineQueued: function (payload) {
+            if (this.options.debug) {
+                this.log("got onComplete payload" + JSON.stringify(payload));
+            }
+
             this.gcodeQueue[payload["Id"]] = {
                 msg: payload["D"],
                 queued: true,
@@ -245,6 +255,10 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
          * @param payload e.g. {"Id":"123"}
          */
         handleGcodeLineComplete: function (payload) {
+            if (this.options.debug) {
+                console.log("got onComplete payload" + JSON.stringify(payload));
+            }
+
             var id = payload["Id"];
             this.checkLaserStatusChange(this.gcodeQueue[id].msg);
             this.gcodeQueue[id].completed = true;
@@ -273,7 +287,9 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         laserStatus: {
             on: false
         },
-        options: null,
+        options: {
+            debug: true
+        },
         setupUiFromCookie: function() {
             // read vals from cookies
             var optionStr = $.cookie('com-chilipeppr-widget-grblaser-options');
@@ -284,7 +300,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
                 this.options = options.laserStatus;
                 this.progress = options.progress;
                 this.goScale = options.goScale;
-                console.log("Loaded the following options:" + options);
+                this.log("Loaded the following options:" + options);
             } else {
                 // default initial values are fine
             }
@@ -297,7 +313,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
                 goScale: this.goScale
             };
             var optionsStr = JSON.stringify(options);
-            //console.log("GRBL: saving options:", options, "json.stringify:", optionsStr);
+            //this.log("GRBL: saving options:", options, "json.stringify:", optionsStr);
             // store cookie
             $.cookie('com-chilipeppr-widget-grblaser-options', optionsStr, {
                 expires: 365 * 10,
@@ -347,7 +363,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
 //            if (!this.goScale.ready) {
 //                this.messageUser("Processing Bounding Box", "Getting bounding box from scene");
 //                chilipeppr.subscribe("/com-chilipeppr-widget-3dviewer/recv3dObject", function(obj) {
-//                    console.log("3d obj:", obj);
+//                    this.log("3d obj:", obj);
 //                    var boundingBox = new THREE.BoundingBoxHelper(obj, 0xff0000);
 //                    boundingBox.update();
 //                    this.goScale.refBoundingBoxInScene = boundingBox;
@@ -384,7 +400,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             // chevron hide body
             var that = this;
             $('#com-chilipeppr-widget-grblaser .hidebody').click(function(evt) {
-                //console.log("GRBL: hide/unhide body");
+                //this.log("GRBL: hide/unhide body");
                 if ($('#com-chilipeppr-widget-grblaser .panel-body .stat-row').hasClass('hidden')) {
                     // it's hidden, unhide
                     that.showBody(evt);
@@ -421,6 +437,17 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
 
             $('#info-button').click(function () {
                 $("#com-chilipeppr-widget-grblaser").find(".card").toggleClass("flipped");
+            });
+
+            $('#debug-button').click(function () {
+                that.options.debug = !that.options.debug;
+                if (that.options.debug) {
+                    console.log("Debug output for grblLaser widget is ON");
+                    $(this).addClass("btn-warning").removeClass("btn-default");
+                } else {
+                    console.log("Debug output for grblLaser widget is OFF");
+                    $(this).addClass("btn-default").removeClass("btn-warning");
+                }
             });
 
 
@@ -481,6 +508,8 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             <div class="btn-group">
                 <button type="button" id="info-button" class="btn btn-xs btn-default">
                     <span class="glyphicon glyphicon-question-sign"> </span></button>
+                <button type="button" id="debug-button" class="btn btn-xs btn-default">
+                    Toggle debug</button>
                 <div class="btn-group">
                     <div class="dropdown">
                         <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
