@@ -147,7 +147,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
                 this.progress.currentGcodeLine++;
                 this.progress.percentage = 100.0 * this.progress.currentGcodeLine / this.progress.totalGcodeLine;
                 $("#laser-progress-bar").style.width = this.progress.percentage + "%";
-                $("#laser-progress-bar").innerHTML = "GCode Line " + this.progress.currentGcodeLine + "/" +
+                $("#laser-progress-bar").innerHTML = "Line " + this.progress.currentGcodeLine + "/" +
                     this.progress.totalGcodeLine;
             }
         },
@@ -315,10 +315,16 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             this.setupQuickGcodeButton($("#com-chilipeppr-widget-grblaser .zero-coordinate-system-1"),
                     "G10 L20 P1 X0 Y0 Z0", "Set the current position to work piece 1 start position. Good for " +
                             "starting your work from this position.");
+            this.setupQuickGcodeButton($("#com-chilipeppr-widget-grblaser .use-coordinate-system-1"),
+                    "G54", "Use coordinate system 1. All following g-code works from this coordinate sytem");
             this.setupQuickGcodeButton($("#com-chilipeppr-widget-grblaser .zero-coordinate-system-2"),
                     "G10 L20 P2 X0 Y0 Z0");
+            this.setupQuickGcodeButton($("#com-chilipeppr-widget-grblaser .use-coordinate-system-2"),
+                    "G55", "Use coordinate system 2. All following g-code works from this coordinate sytem");
             this.setupQuickGcodeButton($("#com-chilipeppr-widget-grblaser .zero-coordinate-system-3"),
                     "G10 L20 P3 X0 Y0 Z0");
+            this.setupQuickGcodeButton($("#com-chilipeppr-widget-grblaser .use-coordinate-system-3"),
+                    "G56", "Use coordinate system 3. All following g-code works from this coordinate sytem");
 
 
             $('#com-chilipeppr-widget-grblaser .btn-toolbar .btn').popover({
@@ -387,7 +393,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
     <div id="com-chilipeppr-widget-grblaser-body" class="panel-body">
         <div id="laser-progress-bar" class="row">
             <div class="col-sm-4">
-                Progress <span class="progress-text">GCode Line ?/?</span>
+                Progress
             </div>
             <div class="col-sm-8">
                 <div class="progress">
@@ -419,19 +425,34 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             <div class="col-sm-4">
 
                 <div class="btn-group">
-                    Coordinate System 1
-                    <button class="btn btn-xs btn-default zero-coordinate-system-1">Zero</button>
-                    <button class="btn btn-xs btn-default move-coordinate-system-1">Move To</button>
+                    <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
+                        Coordinate System 1
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a class="zero-coordinate-system-1" href="#">Zero</a></li>
+                        <li><a class="use-coordinate-system-1" href="#">Use</a></li>
+                    </ul>
                 </div>
                 <div class="btn-group">
-                    Coordinate System 2
-                    <button class="btn btn-xs btn-default zero-coordinate-system-2">Zero</button>
-                    <button class="btn btn-xs btn-default move-coordinate-system-1">Move To</button>
+                    <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
+                        Coordinate System 2
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a class="zero-coordinate-system-2" href="#">Zero</a></li>
+                        <li><a class="use-coordinate-system-2" href="#">Use</a></li>
+                    </ul>
                 </div>
                 <div class="btn-group">
-                    Coordinate System 3
-                    <button class="btn btn-xs btn-default zero-coordinate-system-3">Zero</button>
-                    <button class="btn btn-xs btn-default move-coordinate-system-3">Move To</button>
+                    <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
+                        Coordinate System 3
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a class="zero-coordinate-system-3" href="#">Zero</a></li>
+                        <li><a class="use-coordinate-system-3" href="#">Use</a></li>
+                    </ul>
                 </div>
             </div>
             <div class="col-sm-4">
