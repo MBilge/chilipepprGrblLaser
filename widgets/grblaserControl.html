@@ -109,6 +109,11 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         setBoundingBox: function(boundingBox) {
             this.goScale.boundingBox = boundingBox;
             this.goScale.ready = true;
+            if (boundingBox != null) {
+                $("#scale-info").innerText = boundingBox.min.x + "," + boundingBox.min.y + "->" + boundingBox.max.x +
+                        "," + boundingBox.max.y;
+            }
+
             console.log("Bounding box=" + JSON.stringify(boundingBox));
         },
         /** Not really working as intended since GRBL status != tool status
@@ -131,6 +136,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         progress : {
             percentage: 0,
             currentGcodeLine: 0,
+            totalGcodeLine: 0,
             percentagePerGcodeLine: {}
         },
         /**
@@ -139,8 +145,10 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         updateProgressIndicator: function (line) {
             if (line == this.STATUS_CODE.OK) {
                 this.progress.currentGcodeLine++;
+                this.progress.percentage = 100.0 * this.progress.currentGcodeLine / this.progress.totalGcodeLine;
                 $("#laser-progress-bar").style.width = this.progress.percentage + "%";
-                $("#laser-progress-bar").innerHTML = this.progress.percentage + "%";
+                $("#laser-progress-bar").innerHTML = "GCode Line " + this.progress.currentGcodeLine + "/" +
+                    this.progress.totalGcodeLine;
             }
         },
         handleNewFile: function () {
@@ -149,7 +157,11 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         },
         handleGcodeLineBuffered: function (rawMsg) {
             this.checkLaserStatusChange(rawMsg);
-            this.updateProgressIndicator(rawMsg);
+
+            // update progress total Gcode line count
+            if (rawMsg.length === 0 || !rawMsg.trim()) {
+                this.progress.totalGcodeLine++;
+            }
         },
         init: function () {
             this.setupUiFromCookie();
@@ -171,20 +183,25 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         options: null,
         setupUiFromCookie: function() {
             // read vals from cookies
-            var options = $.cookie('com-chilipeppr-widget-grblaser-options');
+            var optionStr = $.cookie('com-chilipeppr-widget-grblaser-options');
 
             if (options) {
-                options = $.parseJSON(options);
-                //console.log("GRBL: just evaled options: ", options);
+                var options = $.parseJSON(optionStr);
+                this.laserStatus = options.laserStatus;
+                this.options = options.laserStatus;
+                this.progress = options.progress;
+                this.goScale = options.goScale;
+                console.log("Loaded the following options:" + options);
             } else {
-                options = {showBody: true};
+                // default initial values are fine
             }
-            this.options = options;
-            //console.log("GRBL: options:", options);
         },
         saveOptionsCookie: function() {
             var options = {
-                showBody: this.options.showBody
+                laserStatus: this.laserStatus,
+                options: this.options,
+                progress: this.progress,
+                goScale: this.goScale
             };
             var optionsStr = JSON.stringify(options);
             //console.log("GRBL: saving options:", options, "json.stringify:", optionsStr);
@@ -370,7 +387,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
     <div id="com-chilipeppr-widget-grblaser-body" class="panel-body">
         <div id="laser-progress-bar" class="row">
             <div class="col-sm-4">
-                Gcode Line Progress <span class="progress-text">?/?</span>
+                Progress <span class="progress-text">GCode Line ?/?</span>
             </div>
             <div class="col-sm-8">
                 <div class="progress">
@@ -394,16 +411,27 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
 
         <div class="row">
             <div class="col-sm-4">
+                <span id="scale-info">No Scale Info</span>
                 <div class="btn-group">
                     <button class="btn btn-xs btn-default go-scale">Go Scale</button>
                 </div>
             </div>
             <div class="col-sm-4">
-                Zero
+
                 <div class="btn-group">
-                    <button class="btn btn-xs btn-default zero-coordinate-system-1">Coordinate System 1</button>
-                    <button class="btn btn-xs btn-default zero-coordinate-system-2">Coordinate System 2</button>
-                    <button class="btn btn-xs btn-default zero-coordinate-system-3">Coordinate System 3</button>
+                    Coordinate System 1
+                    <button class="btn btn-xs btn-default zero-coordinate-system-1">Zero</button>
+                    <button class="btn btn-xs btn-default move-coordinate-system-1">Move To</button>
+                </div>
+                <div class="btn-group">
+                    Coordinate System 2
+                    <button class="btn btn-xs btn-default zero-coordinate-system-2">Zero</button>
+                    <button class="btn btn-xs btn-default move-coordinate-system-1">Move To</button>
+                </div>
+                <div class="btn-group">
+                    Coordinate System 3
+                    <button class="btn btn-xs btn-default zero-coordinate-system-3">Zero</button>
+                    <button class="btn btn-xs btn-default move-coordinate-system-3">Move To</button>
                 </div>
             </div>
             <div class="col-sm-4">
