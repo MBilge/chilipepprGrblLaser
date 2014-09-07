@@ -8,7 +8,6 @@
 <link rel="stylesheet" type="text/css" href="https://raw.githubusercontent.com/dattanchu/chilipepprGrblLaser/master/css/widget.css">
 <script type='text/javascript' src="http://www.chilipeppr.com/js/require.js"></script>
 
-
 <style type='text/css'>
     #com-chilipeppr-widget-grblaser .enabled{
         background-color: #CCFF99;
@@ -20,15 +19,6 @@
 // Test this element. This code is auto-removed by the chilipeppr.load()
 cprequire_test(["inline:com-chilipeppr-widget-grblaser"], function (grbl) {
     grbl.init();
-
-    var sendLaserOnOff = function(isOn) {
-        setTimeout(function() {
-            grbl.sendCode((isOn) ? grbl.CODE.TOOL_OFF : grbl.CODE.TOOL_ON);
-            sendLaserOnOff(!isOn);
-        }, 10000);
-    };
-
-    sendLaserOnOff();
 
     chilipeppr.publish("/com-chilipeppr-widget-3dviewer/sceneReloaded",
             {
@@ -379,6 +369,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
                     "G56", "Use coordinate system 3. All following g-code works from this coordinate sytem");
 
             $('#info-button').click(function () {
+                console.log("Flipping card");
                 $("#com-chilipeppr-widget-grblaser").find(".card").toggleClass("flipped");
             });
 
@@ -434,89 +425,91 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
 </head>
 <body>
 <div id="com-chilipeppr-widget-grblaser" class="panel panel-default flip">
-    <div class="card">
-        <div class="panel-heading">
-            <span class="panel-title" data-toggle="popover">Laser Controls</span>
-            <div class="btn-toolbar pull-right" role="toolbar" >
+    <div class="panel-heading">
+        <span class="panel-title" data-toggle="popover">Laser Controls</span>
+        <div class="btn-toolbar pull-right" role="toolbar" >
+            <div class="btn-group">
+                <button type="button" id="info-button" class="btn btn-xs btn-default">
+                    <span class="glyphicon glyphicon-question-sign"> </span></button>
                 <div class="btn-group">
-                    <button type="button" id="info-button" class="btn btn-xs btn-default">
-                        <span class="glyphicon glyphicon-question-sign"> </span></button>
-                    <div class="btn-group">
-                        <div class="dropdown">
-                            <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
-                                <span class="glyphicon glyphicon-cog"></span></button>
-                            <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                            </ul>
-                        </div>
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
+                            <span class="glyphicon glyphicon-cog"></span></button>
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
-        <div id="com-chilipeppr-widget-grblaser-body" class="panel-body face front">
-            <div class="row">
-                <div class="col-sm-4">
-                    Progress
-                </div>
-                <div class="col-sm-8">
-                    <div class="progress">
-                        <div id="laser-progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">
-                            0%
+    </div>
+    <div class="card">
+        <div class="face front">
+            <div id="com-chilipeppr-widget-grblaser-body" class="panel-body">
+                <div class="row">
+                    <div class="col-sm-4">
+                        Progress
+                    </div>
+                    <div class="col-sm-8">
+                        <div class="progress">
+                            <div id="laser-progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">
+                                0%
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-4">
-                    <div id="grblaser-current-state">Laser is <span class="label label-danger com-chilipeppr-grblaser-state-on">ON</span><span class="label label-success com-chilipeppr-grblaser-state-off">OFF</span></div>
-                </div>
-                <div class="col-sm-8">
-                    <div class="btn-group ">
-                        <button class="btn btn-xs btn-danger laser-on-button"><span class="glyphicon glyphicon-fire"> </span> Turn Laser ON</button>
-                        <button class="btn btn-xs btn-success laser-off-button"><span class="glyphicon glyphicon-remove"> </span> Turn Laser OFF</button>
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div id="grblaser-current-state">Laser is <span class="label label-danger com-chilipeppr-grblaser-state-on">ON</span><span class="label label-success com-chilipeppr-grblaser-state-off">OFF</span></div>
+                    </div>
+                    <div class="col-sm-8">
+                        <div class="btn-group ">
+                            <button class="btn btn-xs btn-danger laser-on-button"><span class="glyphicon glyphicon-fire"> </span> Turn Laser ON</button>
+                            <button class="btn btn-xs btn-success laser-off-button"><span class="glyphicon glyphicon-remove"> </span> Turn Laser OFF</button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="row">
-                <div class="col-sm-4">
-                    <span id="scale-info">No Scale Info</span>
-                    <div class="btn-group">
-                        <button class="btn btn-xs btn-default go-scale">Go Scale</button>
+                <div class="row">
+                    <div class="col-sm-4">
+                        <span id="scale-info">No Scale Info</span>
+                        <div class="btn-group">
+                            <button class="btn btn-xs btn-default go-scale">Go Scale</button>
+                        </div>
                     </div>
-                </div>
-                <div class="col-sm-4">
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
-                            Coordinate System 1
-                            <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu" role="menu">
-                            <li><a class="zero-coordinate-system-1" href="#">Zero</a></li>
-                            <li><a class="use-coordinate-system-1" href="#">Use</a></li>
-                        </ul>
+                    <div class="col-sm-4">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
+                                Coordinate System 1
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" role="menu">
+                                <li><a class="zero-coordinate-system-1" href="#">Zero</a></li>
+                                <li><a class="use-coordinate-system-1" href="#">Use</a></li>
+                            </ul>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
+                                Coordinate System 2
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" role="menu">
+                                <li><a class="zero-coordinate-system-2" href="#">Zero</a></li>
+                                <li><a class="use-coordinate-system-2" href="#">Use</a></li>
+                            </ul>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
+                                Coordinate System 3
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" role="menu">
+                                <li><a class="zero-coordinate-system-3" href="#">Zero</a></li>
+                                <li><a class="use-coordinate-system-3" href="#">Use</a></li>
+                            </ul>
+                        </div>
                     </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
-                            Coordinate System 2
-                            <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu" role="menu">
-                            <li><a class="zero-coordinate-system-2" href="#">Zero</a></li>
-                            <li><a class="use-coordinate-system-2" href="#">Use</a></li>
-                        </ul>
+                    <div class="col-sm-4">
                     </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
-                            Coordinate System 3
-                            <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu" role="menu">
-                            <li><a class="zero-coordinate-system-3" href="#">Zero</a></li>
-                            <li><a class="use-coordinate-system-3" href="#">Use</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-sm-4">
                 </div>
             </div>
         </div>
