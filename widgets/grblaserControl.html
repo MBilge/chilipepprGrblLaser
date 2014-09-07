@@ -5,6 +5,7 @@
 <title>Widget / GRBLaser</title>
 
 <link rel="stylesheet" type="text/css" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="https://raw.githubusercontent.com/dattanchu/chilipepprGrblLaser/master/css/widget.css">
 <script type='text/javascript' src="http://www.chilipeppr.com/js/require.js"></script>
 
 
@@ -43,6 +44,50 @@ cprequire_test(["inline:com-chilipeppr-widget-grblaser"], function (grbl) {
                 }
             }
     );
+
+    chilipeppr.publish("/com-chilipeppr-widget-serialport/onQueue", {
+        "Id" : 1,
+        "D": "M3"
+    });
+    chilipeppr.publish("/com-chilipeppr-widget-serialport/onQueue", {
+        "Id" : 2,
+        "D": "G0 X0 Y0"
+    });
+    chilipeppr.publish("/com-chilipeppr-widget-serialport/onQueue", {
+        "Id" : 3,
+        "D": "G0 X100 Y0"
+    });
+    chilipeppr.publish("/com-chilipeppr-widget-serialport/onQueue", {
+        "Id" : 4,
+        "D": "G0 X100 Y100"
+    });
+    chilipeppr.publish("/com-chilipeppr-widget-serialport/onQueue", {
+        "Id" : 5,
+        "D": "G0 X0 Y100"
+    });
+    chilipeppr.publish("/com-chilipeppr-widget-serialport/onQueue", {
+        "Id" : 6,
+        "D": "G0 X0 Y0"
+    });
+    chilipeppr.publish("/com-chilipeppr-widget-serialport/onQueue", {
+        "Id" : 7,
+        "D": "M5"
+    });
+    chilipeppr.publish("/com-chilipeppr-widget-serialport/onQueue", {
+        "Id" : 8,
+        "D": " "
+    });
+
+    var sendCompleteId = function (id) {
+        chilipeppr.publish("/com-chilipeppr-widget-serialport/onComplete", {"Id": id});
+
+        if (id < 8) {
+            setTimeout(function () {
+                sendCompleteId(id + 1);
+            }, 1000);
+        }
+    };
+    sendCompleteId(1);
 
     setTimeout(function() {
         console.log("Bounding box is ready= " + grbl.goScale.ready);
@@ -139,29 +184,36 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             totalGcodeLine: 0,
             percentagePerGcodeLine: {}
         },
-        /**
-         * This method updates the
-         */
-        updateProgressIndicator: function (line) {
-            if (line == this.STATUS_CODE.OK) {
-                this.progress.currentGcodeLine++;
-                this.progress.percentage = 100.0 * this.progress.currentGcodeLine / this.progress.totalGcodeLine;
-                $("#laser-progress-bar").style.width = this.progress.percentage + "%";
-                $("#laser-progress-bar").innerHTML = "Line " + this.progress.currentGcodeLine + "/" +
-                    this.progress.totalGcodeLine;
-            }
-        },
         handleNewFile: function () {
             this.setBoundingBox();
             this.progress.currentGcodeLine = 0;
         },
-        handleGcodeLineBuffered: function (rawMsg) {
-            this.checkLaserStatusChange(rawMsg);
+        gcodeQueue : {},
+        /** @param payload e.g. {"Id":"123", "D":"G0 X1 "}
+         */
+        handleGcodeLineQueued: function (payload) {
+            this.gcodeQueue[payload["Id"]] = {
+                msg: payload["D"],
+                queued: true,
+                completed: false
+            };
 
-            // update progress total Gcode line count
-            if (rawMsg.length === 0 || !rawMsg.trim()) {
-                this.progress.totalGcodeLine++;
-            }
+            this.progress.totalGcodeLine++;
+        },
+        /**
+         * @param payload e.g. {"Id":"123"}
+         */
+        handleGcodeLineComplete: function (payload) {
+            var id = payload["Id"];
+            this.checkLaserStatusChange(this.gcodeQueue[id].msg);
+            this.gcodeQueue[id].completed = true;
+
+            // Update progress
+            this.progress.currentGcodeLine = parseInt(id);
+            this.progress.percentage = 100.0 * this.progress.currentGcodeLine / this.progress.totalGcodeLine;
+            $("#laser-progress-bar")[0].style.width = this.progress.percentage + "%";
+            $("#laser-progress-bar")[0].innerHTML = "Line " + this.progress.currentGcodeLine + "/" +
+                    this.progress.totalGcodeLine;
         },
         init: function () {
             this.setupUiFromCookie();
@@ -169,10 +221,10 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             this.forkSetup();
             // TODO(dchu): We still need to figure out the current tool status from GRBL
 //            this.queryCurrentGrblStatus();
-            chilipeppr.subscribe("/com-chilipeppr-widget-serialport/send", this, this.handleGcodeLineBuffered);
+            chilipeppr.subscribe("/com-chilipeppr-widget-serialport/onQueue", this, this.handleGcodeLineQueued);
+            chilipeppr.subscribe("/com-chilipeppr-widget-serialport/onComplete", this, this.handleGcodeLineComplete);
             chilipeppr.subscribe("/com-chilipeppr-widget-grblaser/laserOnOffChange", this, this.updateLaserStatusIndication);
             chilipeppr.subscribe("/com-chilipeppr-widget-3dviewer/sceneReloaded", this, this.handleNewFile);
-            chilipeppr.subscribe("/com-chilipeppr-widget-serialport/recvline", this, this.updateProgressIndicator);
 
             // initial publish to sync up
             chilipeppr.publish("/com-chilipeppr-widget-grblaser/laserOnOffChange", this.laserStatus.on);
@@ -326,6 +378,10 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             this.setupQuickGcodeButton($("#com-chilipeppr-widget-grblaser .use-coordinate-system-3"),
                     "G56", "Use coordinate system 3. All following g-code works from this coordinate sytem");
 
+            $('#info-button').click(function () {
+                $("#com-chilipeppr-widget-grblaser").find(".card").toggleClass("flipped");
+            });
+
 
             $('#com-chilipeppr-widget-grblaser .btn-toolbar .btn').popover({
                 delay: 500,
@@ -377,90 +433,100 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
 </script>
 </head>
 <body>
-<div id="com-chilipeppr-widget-grblaser" class="panel panel-default">
-    <div class="panel-heading">
-        <span class="panel-title" data-toggle="popover">Laser Controls</span>
-        <div class="btn-toolbar pull-right" role="toolbar" >
-            <div class="btn-group">
-                <div class="dropdown">
-                    <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
-                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="com-chilipeppr-widget-grblaser-body" class="panel-body">
-        <div id="laser-progress-bar" class="row">
-            <div class="col-sm-4">
-                Progress
-            </div>
-            <div class="col-sm-8">
-                <div class="progress">
-                    <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">
-                        0%
+<div id="com-chilipeppr-widget-grblaser" class="panel panel-default flip">
+    <div class="card">
+        <div class="panel-heading">
+            <span class="panel-title" data-toggle="popover">Laser Controls</span>
+            <div class="btn-toolbar pull-right" role="toolbar" >
+                <div class="btn-group">
+                    <button type="button" id="info-button" class="btn btn-xs btn-default">
+                        <span class="glyphicon glyphicon-question-sign"> </span></button>
+                    <div class="btn-group">
+                        <div class="dropdown">
+                            <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
+                                <span class="glyphicon glyphicon-cog"></span></button>
+                            <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="row">
-            <div class="col-sm-4">
-                <div id="grblaser-current-state">Laser is <span class="label label-danger com-chilipeppr-grblaser-state-on">ON</span><span class="label label-success com-chilipeppr-grblaser-state-off">OFF</span></div>
+        <div id="com-chilipeppr-widget-grblaser-body" class="panel-body face front">
+            <div class="row">
+                <div class="col-sm-4">
+                    Progress
+                </div>
+                <div class="col-sm-8">
+                    <div class="progress">
+                        <div id="laser-progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">
+                            0%
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="col-sm-8">
-                <div class="btn-group ">
-                    <button class="btn btn-xs btn-danger laser-on-button"><span class="glyphicon glyphicon-fire"> </span> Turn Laser ON</button>
-                    <button class="btn btn-xs btn-success laser-off-button"><span class="glyphicon glyphicon-remove"> </span> Turn Laser OFF</button>
+            <div class="row">
+                <div class="col-sm-4">
+                    <div id="grblaser-current-state">Laser is <span class="label label-danger com-chilipeppr-grblaser-state-on">ON</span><span class="label label-success com-chilipeppr-grblaser-state-off">OFF</span></div>
+                </div>
+                <div class="col-sm-8">
+                    <div class="btn-group ">
+                        <button class="btn btn-xs btn-danger laser-on-button"><span class="glyphicon glyphicon-fire"> </span> Turn Laser ON</button>
+                        <button class="btn btn-xs btn-success laser-off-button"><span class="glyphicon glyphicon-remove"> </span> Turn Laser OFF</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-4">
+                    <span id="scale-info">No Scale Info</span>
+                    <div class="btn-group">
+                        <button class="btn btn-xs btn-default go-scale">Go Scale</button>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
+                            Coordinate System 1
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                            <li><a class="zero-coordinate-system-1" href="#">Zero</a></li>
+                            <li><a class="use-coordinate-system-1" href="#">Use</a></li>
+                        </ul>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
+                            Coordinate System 2
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                            <li><a class="zero-coordinate-system-2" href="#">Zero</a></li>
+                            <li><a class="use-coordinate-system-2" href="#">Use</a></li>
+                        </ul>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
+                            Coordinate System 3
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                            <li><a class="zero-coordinate-system-3" href="#">Zero</a></li>
+                            <li><a class="use-coordinate-system-3" href="#">Use</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-sm-4">
                 </div>
             </div>
         </div>
-
-        <div class="row">
-            <div class="col-sm-4">
-                <span id="scale-info">No Scale Info</span>
-                <div class="btn-group">
-                    <button class="btn btn-xs btn-default go-scale">Go Scale</button>
-                </div>
-            </div>
-            <div class="col-sm-4">
-
-                <div class="btn-group">
-                    <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
-                        Coordinate System 1
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu" role="menu">
-                        <li><a class="zero-coordinate-system-1" href="#">Zero</a></li>
-                        <li><a class="use-coordinate-system-1" href="#">Use</a></li>
-                    </ul>
-                </div>
-                <div class="btn-group">
-                    <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
-                        Coordinate System 2
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu" role="menu">
-                        <li><a class="zero-coordinate-system-2" href="#">Zero</a></li>
-                        <li><a class="use-coordinate-system-2" href="#">Use</a></li>
-                    </ul>
-                </div>
-                <div class="btn-group">
-                    <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
-                        Coordinate System 3
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu" role="menu">
-                        <li><a class="zero-coordinate-system-3" href="#">Zero</a></li>
-                        <li><a class="use-coordinate-system-3" href="#">Use</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="col-sm-4">
+        <div class="face back">
+            <div id="com-chilipeppr-widget-grblaser-ftr" style="font-size:10px;">
+                Work in progress - to report issues please email
+                <a href="mailto:dattanchu@gmail.com">dattanchu@gmail.com</a> (v0.1)
             </div>
         </div>
-
     </div>
-    <div id="com-chilipeppr-widget-grblaser-ftr" class="panel-footer" style="font-size:10px;">Work in progress - to report issues please email <a href="mailto:dattanchu@gmail.com">dattanchu@gmail.com</a> (v0.1)</div>
 </div>
 </body>
 </html>
