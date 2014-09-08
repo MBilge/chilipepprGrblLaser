@@ -443,10 +443,12 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
                 that.options.debug = !that.options.debug;
                 if (that.options.debug) {
                     console.log("Debug output for grblLaser widget is ON");
-                    $(this).addClass("btn-warning").removeClass("btn-default");
+                    $(this).addClass("btn-warning");
+                    $(this).removeClass("btn-default");
                 } else {
                     console.log("Debug output for grblLaser widget is OFF");
-                    $(this).addClass("btn-default").removeClass("btn-warning");
+                    $(this).addClass("btn-default");
+                    $(this).removeClass("btn-warning");
                 }
             });
 
