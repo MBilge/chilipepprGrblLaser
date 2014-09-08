@@ -29,6 +29,7 @@
     .flip .card {
         width: 100%;
         height: 100%;
+        position: relative;
         -webkit-transform-style: preserve-3d;
         -webkit-transition: 0.5s;
         -moz-transform-style: preserve-3d;
@@ -231,8 +232,8 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             totalGcodeLine: 0,
             percentagePerGcodeLine: {}
         },
-        handleNewFile: function () {
-            this.setBoundingBox();
+        handleNewFile: function (bbox) {
+            this.setBoundingBox(bbox);
             this.progress.currentGcodeLine = 0;
         },
         gcodeQueue : {},
