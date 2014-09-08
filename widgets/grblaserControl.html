@@ -28,7 +28,6 @@
     }
     .flip .card {
         width: 100%;
-        height: 100%;
         position: relative;
         -webkit-transform-style: preserve-3d;
         -webkit-transition: 0.5s;
@@ -279,6 +278,10 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
 
             // initial publish to sync up
             chilipeppr.publish("/com-chilipeppr-widget-grblaser/laserOnOffChange", this.laserStatus.on);
+
+            // Update height after we have all the elements since
+            // it is not possible for a parent to have a height when all the children have absolute position
+            $("#com-chilipeppr-widget-grblaser-card").height($("#com-chilipeppr-widget-grblaser-body").height() + 20);
         },
         laserStatus: {
             on: false
@@ -522,7 +525,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             </div>
         </div>
     </div>
-    <div class="card">
+    <div id="com-chilipeppr-widget-grblaser-card" class="card">
         <div class="face front">
             <div id="com-chilipeppr-widget-grblaser-body" class="panel-body">
                 <div class="row">
@@ -594,7 +597,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             </div>
         </div>
         <div class="face back">
-            <div id="com-chilipeppr-widget-grblaser-ftr" style="font-size:10px;">
+            <div id="com-chilipeppr-widget-grblaser-ftr" class="panel-body">
                 Work in progress - to report issues please email
                 <a href="mailto:dattanchu@gmail.com">dattanchu@gmail.com</a> (v0.1)
             </div>
