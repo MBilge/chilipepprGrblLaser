@@ -165,7 +165,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         },
         log: function(msg) {
             if (this.options.debug) {
-                console.log(this.shortid+ ": " + msg);
+                console.log(this.shortid + ": " + msg);
             }
         },
         checkLaserStatusChange: function (rawMsg) {
@@ -239,10 +239,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
         /** @param payload e.g. {"Id":"123", "D":"G0 X1 "}
          */
         handleGcodeLineQueued: function (payload) {
-            if (this.options.debug) {
-                this.log("got onComplete payload" + JSON.stringify(payload));
-            }
-
+            this.log("got onComplete payload " + JSON.stringify(payload));
             this.gcodeQueue[payload["Id"]] = {
                 msg: payload["D"],
                 queued: true,
@@ -255,9 +252,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
          * @param payload e.g. {"Id":"123"}
          */
         handleGcodeLineComplete: function (payload) {
-            if (this.options.debug) {
-                console.log("got onComplete payload" + JSON.stringify(payload));
-            }
+            this.log("got onComplete payload" + JSON.stringify(payload));
 
             var id = payload["Id"];
             this.checkLaserStatusChange(this.gcodeQueue[id].msg);
@@ -396,6 +391,17 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
                 placement: 'auto'
             });
         },
+        updateDebugUI: function () {
+            if (this.options.debug) {
+                console.log("Debug output for grblLaser widget is ON");
+                $('#debug-button').addClass("btn-warning");
+                $('#debug-button').removeClass("btn-default");
+            } else {
+                console.log("Debug output for grblLaser widget is OFF");
+                $('#debug-button').addClass("btn-default");
+                $('#debug-button').removeClass("btn-warning");
+            }
+        },
         btnSetup: function() {
             // chevron hide body
             var that = this;
@@ -441,17 +447,9 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
 
             $('#debug-button').click(function () {
                 that.options.debug = !that.options.debug;
-                if (that.options.debug) {
-                    console.log("Debug output for grblLaser widget is ON");
-                    $(this).addClass("btn-warning");
-                    $(this).removeClass("btn-default");
-                } else {
-                    console.log("Debug output for grblLaser widget is OFF");
-                    $(this).addClass("btn-default");
-                    $(this).removeClass("btn-warning");
-                }
+                that.updateDebugUI();
             });
-
+            this.updateDebugUI();
 
             $('#com-chilipeppr-widget-grblaser .btn-toolbar .btn').popover({
                 delay: 500,
