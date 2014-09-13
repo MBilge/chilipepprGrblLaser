@@ -247,6 +247,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             };
 
             this.progress.totalGcodeLine++;
+            return true;
         },
         /**
          * @param payload e.g. {"Id":"123"}
@@ -264,6 +265,7 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             $("#laser-progress-bar")[0].style.width = this.progress.percentage + "%";
             $("#laser-progress-bar")[0].innerHTML = "Line " + this.progress.currentGcodeLine + "/" +
                     this.progress.totalGcodeLine;
+            return true;
         },
         init: function () {
             this.setupUiFromCookie();
@@ -271,8 +273,8 @@ cpdefine("inline:com-chilipeppr-widget-grblaser", ["chilipeppr_ready", "jqueryco
             this.forkSetup();
             // TODO(dchu): We still need to figure out the current tool status from GRBL
 //            this.queryCurrentGrblStatus();
-            chilipeppr.subscribe("/com-chilipeppr-widget-serialport/onQueue", this, this.handleGcodeLineQueued);
-            chilipeppr.subscribe("/com-chilipeppr-widget-serialport/onComplete", this, this.handleGcodeLineComplete);
+            chilipeppr.subscribe("/com-chilipeppr-widget-serialport/onQueue", this, this.handleGcodeLineQueued, 0);
+            chilipeppr.subscribe("/com-chilipeppr-widget-serialport/onComplete", this, this.handleGcodeLineComplete, 0);
             chilipeppr.subscribe("/com-chilipeppr-widget-grblaser/laserOnOffChange", this, this.updateLaserStatusIndication);
             chilipeppr.subscribe("/com-chilipeppr-widget-3dviewer/sceneReloaded", this, this.handleNewFile);
 
